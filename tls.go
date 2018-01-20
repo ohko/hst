@@ -10,23 +10,20 @@ import (
 
 // TLSServer 双向验证
 type TLSServer struct {
-	s      *http.Server
-	Addr   string
-	Ca     string
-	Crt    string
-	Key    string
-	Handle *http.ServeMux
+	base
+	Ca  string
+	Crt string
+	Key string
 }
 
 // NewTLSServer ...
 func NewTLSServer(addr, ca, crt, key string) (HST, error) {
-	o := &TLSServer{
-		Addr:   addr,
-		Ca:     ca,
-		Crt:    crt,
-		Key:    key,
-		Handle: http.NewServeMux(),
-	}
+	o := new(TLSServer)
+	o.Addr = addr
+	o.Ca = ca
+	o.Crt = crt
+	o.Key = key
+	o.handle = http.NewServeMux()
 
 	caCrt, err := ioutil.ReadFile(ca)
 	if err != nil {
@@ -37,7 +34,7 @@ func NewTLSServer(addr, ca, crt, key string) (HST, error) {
 	pool.AppendCertsFromPEM(caCrt)
 	o.s = &http.Server{
 		Addr:    addr,
-		Handler: o.Handle,
+		Handler: o.handle,
 		TLSConfig: &tls.Config{
 			ClientCAs:  pool,
 			ClientAuth: tls.RequireAndVerifyClientCert,
@@ -53,9 +50,4 @@ func (o *TLSServer) Listen() error {
 		return err
 	}
 	return nil
-}
-
-// HandleFunc ...
-func (o *TLSServer) HandleFunc(pattern string, handler http.HandlerFunc) {
-	o.Handle.HandleFunc(pattern, handler)
 }

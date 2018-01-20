@@ -3,9 +3,7 @@ package hst
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -73,22 +71,6 @@ func TLSSGet(url, ca, crt, key string) ([]byte, error) {
 	defer res.Body.Close()
 	bs, err := ioutil.ReadAll(res.Body)
 	return bs, nil
-}
-
-// HandlePfx 输出pfx证书给浏览器安装
-// Example:
-//		http.HandleFunc("/ssl.pfx", HandlePfx("ssl.pfx"))
-func HandlePfx(pfxPath string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/x-x509-ca-cert")
-		caCrt, err := ioutil.ReadFile(pfxPath)
-		if err != nil {
-			log.Println(err)
-			http.NotFound(w, r)
-			return
-		}
-		fmt.Fprint(w, string(caCrt))
-	}
 }
 
 /*

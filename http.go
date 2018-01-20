@@ -7,20 +7,17 @@ import (
 
 // HTTPServer http服务
 type HTTPServer struct {
-	s      *http.Server
-	Addr   string
-	Handle *http.ServeMux
+	base
 }
 
 // NewHTTPServer ...
 func NewHTTPServer(addr string) (HST, error) {
-	o := &HTTPServer{
-		Addr:   addr,
-		Handle: http.NewServeMux(),
-	}
+	o := new(HTTPServer)
+	o.Addr = addr
+	o.handle = http.NewServeMux()
 	o.s = &http.Server{
 		Addr:    addr,
-		Handler: o.Handle,
+		Handler: o.handle,
 	}
 	return o, nil
 }
@@ -32,9 +29,4 @@ func (o *HTTPServer) Listen() error {
 		return err
 	}
 	return nil
-}
-
-// HandleFunc ...
-func (o *HTTPServer) HandleFunc(pattern string, handler http.HandlerFunc) {
-	o.Handle.HandleFunc(pattern, handler)
 }

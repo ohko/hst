@@ -7,24 +7,21 @@ import (
 
 // HTTPSServer 单向验证
 type HTTPSServer struct {
-	s      *http.Server
-	Addr   string
-	Crt    string
-	Key    string
-	Handle *http.ServeMux
+	base
+	Crt string
+	Key string
 }
 
 // NewHTTPSServer ...
 func NewHTTPSServer(addr, crt, key string) (HST, error) {
-	o := &HTTPSServer{
-		Addr:   addr,
-		Crt:    crt,
-		Key:    key,
-		Handle: http.NewServeMux(),
-	}
+	o := new(HTTPSServer)
+	o.Addr = addr
+	o.Crt = crt
+	o.Key = key
+	o.handle = http.NewServeMux()
 	o.s = &http.Server{
 		Addr:    addr,
-		Handler: o.Handle,
+		Handler: o.handle,
 	}
 	return o, nil
 }
@@ -36,9 +33,4 @@ func (o *HTTPSServer) Listen() error {
 		return err
 	}
 	return nil
-}
-
-// HandleFunc ...
-func (o *HTTPSServer) HandleFunc(pattern string, handler http.HandlerFunc) {
-	o.Handle.HandleFunc(pattern, handler)
 }

@@ -3,8 +3,8 @@ package hst
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"testing"
+	"time"
 )
 
 var pass1 = "123"
@@ -23,22 +23,46 @@ func TestMakeTLSFile(t *testing.T) {
 
 func TestNewHTTPServer(t *testing.T) {
 	h, _ := NewHTTPServer(":8080")
-	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, msg)
-	})
-	h.HandleFunc("/ssl.pfx", HandlePfx(path+domain+".ssl.pfx"))
+	h.Favicon()
+	h.Static("/abc/", "./")
+	h.HandleFunc("/", BasicAuth("u", "p"),
+		func(c *Context) {
+			c.JSON(msg, false)
+		}, func(c *Context) {
+			fmt.Fprint(c.W, msg)
+		})
+	h.HandlePfx("/ssl.pfx", path+domain+".ssl.pfx")
 	go h.Listen()
 
+	time.Sleep(time.Millisecond * 100)
+
 	{
-		res, err := HTTPGet("http://127.0.0.1:8080")
+		res, err := HTTPGet("http://u:p@127.0.0.1:8080")
 		if err != nil {
 			t.Fatal(err)
 		}
-		if string(res) != msg {
+		if string(res) != `"`+msg+`"` {
 			t.Fatal(string(res))
 		}
 	}
-
+	{
+		res, err := HTTPGet("http://127.0.0.1:8080/abc/LICENSE")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res) != 1060 {
+			t.Fatal(string(res))
+		}
+	}
+	{
+		res, err := HTTPGet("http://127.0.0.1:8080/favicon.ico")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res) != 198 {
+			t.Fatal(string(res))
+		}
+	}
 	{
 		res, err := HTTPGet("http://127.0.0.1:8080/ssl.pfx")
 		if err != nil {
@@ -56,17 +80,31 @@ func TestNewHTTPServer(t *testing.T) {
 
 func TestNewHTTPSServer(t *testing.T) {
 	h, _ := NewHTTPSServer(":8081", path+domain+".ssl.crt", path+domain+".ssl.key")
-	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, msg)
+	h.HandleFunc("/", BasicAuth("u", "p"), func(c *Context) {
+		fmt.Fprint(c.W, msg)
 	})
 	go h.Listen()
 
-	res, err := HTTPSGet("https://127.0.0.1:8081")
-	if err != nil {
-		t.Fatal(err)
+	time.Sleep(time.Millisecond * 100)
+
+	{
+		res, err := HTTPSGet("https://127.0.0.1:8081")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(res) == msg {
+			t.Fatal(string(res))
+		}
 	}
-	if string(res) != msg {
-		t.Fatal(string(res))
+
+	{
+		res, err := HTTPSGet("https://u:p@127.0.0.1:8081")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(res) != msg {
+			t.Fatal(string(res))
+		}
 	}
 }
 
@@ -75,10 +113,16 @@ func TestNewTLSServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, msg)
-	})
+	h.HandleFunc("/",
+		func(c *Context) {
+			fmt.Fprint(c.W, msg)
+			c.Close()
+		}, func(c *Context) {
+			fmt.Fprint(c.W, msg)
+		})
 	go h.Listen()
+
+	time.Sleep(time.Millisecond * 100)
 
 	res, err := TLSSGet("https://127.0.0.1:8082", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key")
 	if err != nil {
