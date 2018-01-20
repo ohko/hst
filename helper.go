@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -100,37 +101,38 @@ func MakeTLSFile(passRoot, passKey, passPfx, path, domain, email string) bool {
 	if !strings.HasSuffix(path, "/") {
 		path = path + "/"
 	}
-	domain = path + domain
 	os.MkdirAll(path, 0755)
+	log.Println("Path:", path)
 	// 1.1.创建根证书密钥文件(自己做CA)root.key：
-	exec.Command(`openssl`, `genrsa`, `-des3`, `-passout`, `pass:`+passRoot, `-out`, domain+`.ca.key`, `2048`).CombinedOutput()
+	bs, err := exec.Command(`openssl`, `genrsa`, `-des3`, `-passout`, `pass:`+passRoot, `-out`, path+domain+`.ca.key`, `2048`).CombinedOutput()
+	log.Println("-", string(bs), err)
 
 	// 1.2.创建根证书的申请文件root.csr：
-	exec.Command(`openssl`, `req`, `-passin`, `pass:`+passRoot, `-new`, `-subj`, `/C=CN/ST=Shanghai/L=Shanghai/O=MyCompany/OU=MyCompany/CN=`+domain+`/emailAddress=`+email, `-key`, domain+`.ca.key`, `-out`, domain+`.ca.csr`).CombinedOutput()
+	exec.Command(`openssl`, `req`, `-passin`, `pass:`+passRoot, `-new`, `-subj`, `/C=CN/ST=Shanghai/L=Shanghai/O=MyCompany/OU=MyCompany/CN=`+domain+`/emailAddress=`+email, `-key`, path+domain+`.ca.key`, `-out`, path+domain+`.ca.csr`).CombinedOutput()
 
 	// 1.3.创建根证书root.crt：
-	exec.Command(`openssl`, `x509`, `-passin`, `pass:`+passRoot, `-req`, `-days`, `3650`, `-sha256`, `-extensions`, `v3_ca`, `-signkey`, domain+`.ca.key`, `-in`, domain+`.ca.csr`, `-out`, domain+`.ca.crt`).CombinedOutput()
-	exec.Command(`rm`, domain+`.ca.csr`).CombinedOutput()
+	exec.Command(`openssl`, `x509`, `-passin`, `pass:`+passRoot, `-req`, `-days`, `3650`, `-sha256`, `-extensions`, `v3_ca`, `-signkey`, path+domain+`.ca.key`, `-in`, path+domain+`.ca.csr`, `-out`, path+domain+`.ca.crt`).CombinedOutput()
+	exec.Command(`rm`, path+domain+`.ca.csr`).CombinedOutput()
 
 	// 2.1.创建客户端证书私钥
-	exec.Command(`openssl`, `genrsa`, `-des3`, `-passout`, `pass:`+passKey, `-out`, domain+`.ssl.key`, `2048`).CombinedOutput()
+	exec.Command(`openssl`, `genrsa`, `-des3`, `-passout`, `pass:`+passKey, `-out`, path+domain+`.ssl.key`, `2048`).CombinedOutput()
 
 	// 2.2.去除key口令
-	exec.Command(`openssl`, `rsa`, `-passin`, `pass:`+passKey, `-in`, domain+`.ssl.key`, `-out`, domain+`.ssl.key`).CombinedOutput()
+	exec.Command(`openssl`, `rsa`, `-passin`, `pass:`+passKey, `-in`, path+domain+`.ssl.key`, `-out`, path+domain+`.ssl.key`).CombinedOutput()
 
 	// 2.3.创建客户端证书申请文件ssl.csr
-	exec.Command(`openssl`, `req`, `-new`, `-subj`, `/C=US/ST=Mars/L=iTranswarp/O=iTranswarp/OU=iTranswarp/CN=`+domain+`/emailAddress=`+email, `-key`, domain+`.ssl.key`, `-out`, domain+`.ssl.csr`).CombinedOutput()
+	exec.Command(`openssl`, `req`, `-new`, `-subj`, `/C=CN/ST=Shanghai/L=Shanghai/O=MyCompany/OU=MyCompany/CN=`+domain+`/emailAddress=`+email, `-key`, path+domain+`.ssl.key`, `-out`, path+domain+`.ssl.csr`).CombinedOutput()
 
 	// 2.4.创建客户端证书文件ssl.crt
-	exec.Command(`openssl`, `x509`, `-passin`, `pass:`+passRoot, `-req`, `-days`, `365`, `-sha256`, `-extensions`, `v3_req`, `-CA`, domain+`.ca.crt`, `-CAkey`, domain+`.ca.key`, `-CAcreateserial`, `-in`, domain+`.ssl.csr`, `-out`, domain+`.ssl.crt`).CombinedOutput()
-	exec.Command(`rm`, domain+`.ssl.csr`).CombinedOutput()
+	exec.Command(`openssl`, `x509`, `-passin`, `pass:`+passRoot, `-req`, `-days`, `365`, `-sha256`, `-extensions`, `v3_req`, `-CA`, path+domain+`.ca.crt`, `-CAkey`, path+domain+`.ca.key`, `-CAcreateserial`, `-in`, path+domain+`.ssl.csr`, `-out`, path+domain+`.ssl.crt`).CombinedOutput()
+	exec.Command(`rm`, path+domain+`.ssl.csr`).CombinedOutput()
 
 	// 2.5.将客户端证书文件ssl.crt和客户端证书密钥文件ssl.key合并成客户端证书安装包ssl.pfx
-	exec.Command(`openssl`, `pkcs12`, `-export`, `-passout`, `pass:`+passPfx, `-in`, domain+`.ssl.crt`, `-inkey`, domain+`.ssl.key`, `-out`, domain+`.ssl.pfx`).CombinedOutput()
-	exec.Command(`rm`, domain+`.srl`).CombinedOutput()
+	exec.Command(`openssl`, `pkcs12`, `-export`, `-passout`, `pass:`+passPfx, `-in`, path+domain+`.ssl.crt`, `-inkey`, path+domain+`.ssl.key`, `-out`, path+domain+`.ssl.pfx`).CombinedOutput()
+	exec.Command(`rm`, path+domain+`.srl`).CombinedOutput()
 
 	// 3.校验
-	bs1, _ := exec.Command(`openssl`, `x509`, `-noout`, `-modulus`, `-in`, domain+`.ssl.crt`).CombinedOutput()
-	bs2, _ := exec.Command(`openssl`, `rsa`, `-noout`, `-modulus`, `-in`, domain+`.ssl.key`).CombinedOutput()
+	bs1, _ := exec.Command(`openssl`, `x509`, `-noout`, `-modulus`, `-in`, path+domain+`.ssl.crt`).CombinedOutput()
+	bs2, _ := exec.Command(`openssl`, `rsa`, `-noout`, `-modulus`, `-in`, path+domain+`.ssl.key`).CombinedOutput()
 	return string(bs1) == string(bs2)
 }

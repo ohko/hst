@@ -56,3 +56,9 @@ func (o *Context) JSON(data interface{}, gz bool) error {
 func (o *Context) JSON2(no int, data interface{}, gz bool) error {
 	return o.JSON(&map[string]interface{}{"no": no, "data": data}, gz)
 }
+
+// HTML 输出HTML代码
+func (o *Context) HTML(data string) {
+	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(o.W, data)
+}
