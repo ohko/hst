@@ -26,6 +26,7 @@ func NewHTTPServer(addr string) (HST, error) {
 func (o *HTTPServer) Listen() error {
 	log.Println("Listen http://", o.Addr)
 	if err := o.s.ListenAndServe(); err != nil {
+		log.Println("Error http://", err)
 		return err
 	}
 	return nil

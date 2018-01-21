@@ -21,7 +21,7 @@ h, _ := NewHTTPServer(":8080")
 h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
-go h.Listen()
+h.Listen()
 ```
 
 ## https
@@ -31,6 +31,8 @@ h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
 go h.Listen()
+log.Println("wait ctrl+c ...")
+Shutdown([]HST{h}, time.Second*5)
 ```
 
 ## tls

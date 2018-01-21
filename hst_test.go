@@ -3,6 +3,7 @@ package hst
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"testing"
 	"time"
 )
@@ -76,6 +77,9 @@ func TestNewHTTPServer(t *testing.T) {
 			t.Fatal(string(res))
 		}
 	}
+
+	log.Println("wait ctrl+c ...")
+	Shutdown([]HST{h}, time.Second*5)
 }
 
 func TestNewHTTPSServer(t *testing.T) {

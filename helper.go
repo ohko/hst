@@ -8,8 +8,21 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
+	"time"
 )
+
+// Shutdown 等待信号，优雅的停止服务
+func Shutdown(hs []HST, waitTime time.Duration, sig ...os.Signal) {
+	c := make(chan os.Signal)
+	signal.Notify(c, sig...)
+	<-c
+
+	for _, v := range hs {
+		v.Shutdown(waitTime)
+	}
+}
 
 // HTTPGet 获取http内容
 func HTTPGet(url string) ([]byte, error) {

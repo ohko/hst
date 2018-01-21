@@ -1,8 +1,10 @@
 package hst
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type base struct {
@@ -28,6 +30,13 @@ func (o *base) HandleFunc(pattern string, handler ...HandlerFunc) {
 			}
 		}
 	})
+}
+
+// Shutdown 优雅得关闭服务
+func (o *base) Shutdown(waitTime time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), waitTime)
+	defer cancel()
+	o.s.Shutdown(ctx)
 }
 
 // Favicon 显示favicon.ico

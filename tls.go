@@ -45,8 +45,9 @@ func NewTLSServer(addr, ca, crt, key string) (HST, error) {
 
 // Listen ...
 func (o *TLSServer) Listen() error {
-	log.Println("Listen tls://", o.Addr)
+	log.Println("Listen https(tls)://", o.Addr)
 	if err := o.s.ListenAndServeTLS(o.Crt, o.Key); err != nil {
+		log.Println("Error https(tls)://", err)
 		return err
 	}
 	return nil

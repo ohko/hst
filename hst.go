@@ -1,7 +1,10 @@
 package hst
 
+import "time"
+
 // HST ...
 type HST interface {
+	Shutdown(time.Duration)
 	HandleFunc(string, ...HandlerFunc)
 	Static(string, string)
 	HandlePfx(string, string)
