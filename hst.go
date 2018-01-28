@@ -4,10 +4,10 @@ import "time"
 
 // HST ...
 type HST interface {
-	Shutdown(time.Duration)
-	HandleFunc(string, ...HandlerFunc)
-	Static(string, string)
-	HandlePfx(string, string)
+	Shutdown(waitTime time.Duration)
+	HandleFunc(pattern string, handler ...HandlerFunc)
+	Static(partten, path string)
+	HandlePfx(partten, pfxPath string)
 	Favicon()
 	Listen() error
 }
