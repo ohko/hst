@@ -23,7 +23,7 @@ func TestMakeTLSFile(t *testing.T) {
 }
 
 func TestNewHTTPServer(t *testing.T) {
-	h, _ := NewHTTPServer(":8080")
+	h := NewHST(nil)
 	h.Favicon()
 	h.Static("/abc/", "./")
 	h.HandleFunc("/", BasicAuth("u", "p"),
@@ -33,7 +33,7 @@ func TestNewHTTPServer(t *testing.T) {
 			fmt.Fprint(c.W, msg)
 		})
 	h.HandlePfx("/ssl.pfx", path+domain+".ssl.pfx")
-	go h.Listen()
+	go h.ListenHTTP(":8080")
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -79,15 +79,15 @@ func TestNewHTTPServer(t *testing.T) {
 	}
 
 	log.Println("wait ctrl+c ...")
-	Shutdown([]HST{h}, time.Second*5)
+	// Shutdown([]*HST{h}, time.Second*5)
 }
 
 func TestNewHTTPSServer(t *testing.T) {
-	h, _ := NewHTTPSServer(":8081", path+domain+".ssl.crt", path+domain+".ssl.key")
+	h := NewHST(nil)
 	h.HandleFunc("/", BasicAuth("u", "p"), func(c *Context) {
 		fmt.Fprint(c.W, msg)
 	})
-	go h.Listen()
+	go h.ListenHTTPS(":8081", path+domain+".ssl.crt", path+domain+".ssl.key")
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -113,10 +113,7 @@ func TestNewHTTPSServer(t *testing.T) {
 }
 
 func TestNewTLSServer(t *testing.T) {
-	h, err := NewTLSServer(":8082", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key")
-	if err != nil {
-		t.Fatal(err)
-	}
+	h := NewHST(nil)
 	h.HandleFunc("/",
 		func(c *Context) {
 			fmt.Fprint(c.W, msg)
@@ -124,7 +121,7 @@ func TestNewTLSServer(t *testing.T) {
 		}, func(c *Context) {
 			fmt.Fprint(c.W, msg)
 		})
-	go h.Listen()
+	go h.ListenTLS(":8082", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key")
 
 	time.Sleep(time.Millisecond * 100)
 

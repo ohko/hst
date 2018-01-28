@@ -1,8 +1,11 @@
 package hst
 
 import (
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,7 +17,7 @@ import (
 )
 
 // Shutdown 等待信号，优雅的停止服务
-func Shutdown(hs []HST, waitTime time.Duration, sig ...os.Signal) {
+func Shutdown(hs []*HST, waitTime time.Duration, sig ...os.Signal) {
 	c := make(chan os.Signal)
 	signal.Notify(c, sig...)
 	<-c
@@ -85,6 +88,13 @@ func TLSSGet(url, ca, crt, key string) ([]byte, error) {
 	defer res.Body.Close()
 	bs, err := ioutil.ReadAll(res.Body)
 	return bs, nil
+}
+
+// MakeGUID 生成唯一的GUID
+func MakeGUID() string {
+	b := make([]byte, 16)
+	io.ReadFull(rand.Reader, b)
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[8:10], b[6:8], b[4:6], b[10:])
 }
 
 /*

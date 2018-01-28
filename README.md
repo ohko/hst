@@ -8,6 +8,7 @@
 - HTTP认证
 - 自签证书生成
 - 支持中间件
+- 支持Session
 
 # 安装
 ``` shell
@@ -17,31 +18,31 @@ go get -v github.com/ohko/hst
 # 使用
 ## http
 ``` golang
-h, _ := NewHTTPServer(":8080")
+h := NewHST(nil)
 h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
-h.Listen()
+h.ListenHTTP(":8080")
 ```
 
 ## https
 ``` golang
-h, _ := NewHTTPSServer(":8081", "ssl.crt", "ssl.key")
+h := NewHST(nil)
 h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
-go h.Listen()
+go h.ListenHTTPS(":8081", "ssl.crt", "ssl.key")
 log.Println("wait ctrl+c ...")
-Shutdown([]HST{h}, time.Second*5)
+Shutdown([]*HST{h}, time.Second*5)
 ```
 
 ## tls
 ``` golang
-h, _ := NewTLSServer(":8081", "ca.crt", "ssl.crt", "ssl.key")
+h := NewTLSServer(nil)
 h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
-go h.Listen()
+go h.ListenTLS(":8081", "ca.crt", "ssl.crt", "ssl.key")
 ```
 
 # http认证
