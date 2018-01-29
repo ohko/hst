@@ -7,39 +7,27 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 )
 
 // HST ...
 type HST struct {
-	s           *http.Server
-	handle      *http.ServeMux
-	Addr        string
-	sessionLock sync.RWMutex
-	sessionData map[string]*map[string]*sessionData
+	s       *http.Server
+	handle  *http.ServeMux
+	hs      *Handlers
+	Addr    string
+	session Session
 }
 
 // HandlerFunc ...
 type HandlerFunc func(*Context)
 
-type sessionData struct {
-	data   interface{}
-	expire time.Time
-}
-
-// const
-const SESSIONKEY = "HST_SESSION"
-
 // NewHST ...
-func NewHST(handler *http.ServeMux) *HST {
+func NewHST(handlers *Handlers) *HST {
 	o := new(HST)
-	if handler == nil {
-		o.handle = http.NewServeMux()
-	} else {
-		o.handle = handler
-	}
-	o.sessionData = make(map[string]*map[string]*sessionData)
+	o.session = NewMemorySession()
+	o.handle = http.NewServeMux()
+	o.hs = handlers
 	return o
 }
 
@@ -48,6 +36,11 @@ func (o *HST) ListenHTTP(addr string) error {
 	o.s = &http.Server{
 		Addr:    addr,
 		Handler: o.handle,
+	}
+	if o.hs != nil {
+		for k, v := range *o.hs {
+			o.HandleFunc(k, v...)
+		}
 	}
 
 	log.Println("Listen http://", addr)
@@ -63,6 +56,11 @@ func (o *HST) ListenHTTPS(addr, crt, key string) error {
 	o.s = &http.Server{
 		Addr:    addr,
 		Handler: o.handle,
+	}
+	if o.hs != nil {
+		for k, v := range *o.hs {
+			o.HandleFunc(k, v...)
+		}
 	}
 
 	log.Println("Listen https://", addr)
@@ -89,6 +87,11 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 			ClientAuth: tls.RequireAndVerifyClientCert,
 		},
 	}
+	if o.hs != nil {
+		for k, v := range *o.hs {
+			o.HandleFunc(k, v...)
+		}
+	}
 
 	log.Println("Listen https(tls)://", o.Addr)
 	if err := o.s.ListenAndServeTLS(crt, key); err != nil {
@@ -104,10 +107,10 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) {
 	o.handle.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		c := &Context{
-			hst:   o,
-			W:     w,
-			R:     r,
-			close: false,
+			session: o.session,
+			W:       w,
+			R:       r,
+			close:   false,
 		}
 		for _, v := range handler {
 			v(c)

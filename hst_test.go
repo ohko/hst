@@ -24,22 +24,26 @@ func TestMakeTLSFile(t *testing.T) {
 }
 
 func TestNewHTTPServer(t *testing.T) {
-	h := NewHST(nil)
+	hs := &Handlers{
+		"/": []HandlerFunc{
+			func(c *Context) {
+				c.JSON(msg)
+			}, func(c *Context) {
+				fmt.Fprint(c.W, msg)
+			},
+		},
+	}
+
+	h := NewHST(hs)
 	h.Favicon()
 	h.Static("/abc/", "./")
-	h.HandleFunc("/", BasicAuth("u", "p"),
-		func(c *Context) {
-			c.JSON(msg, false)
-		}, func(c *Context) {
-			fmt.Fprint(c.W, msg)
-		})
 	h.HandlePfx("/ssl.pfx", path+domain+".ssl.pfx")
-	go h.ListenHTTP(":8080")
+	go h.ListenHTTP(":8280")
 
 	time.Sleep(time.Millisecond * 100)
 
 	{
-		res, err := HTTPGet("http://u:p@127.0.0.1:8080")
+		res, _, err := HTTPGet("http://u:p@127.0.0.1:8280", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,7 +52,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, err := HTTPGet("http://127.0.0.1:8080/abc/LICENSE")
+		res, _, err := HTTPGet("http://127.0.0.1:8280/abc/LICENSE", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -57,7 +61,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, err := HTTPGet("http://127.0.0.1:8080/favicon.ico")
+		res, _, err := HTTPGet("http://127.0.0.1:8280/favicon.ico", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +70,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, err := HTTPGet("http://127.0.0.1:8080/ssl.pfx")
+		res, _, err := HTTPGet("http://127.0.0.1:8280/ssl.pfx", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,12 +92,12 @@ func TestNewHTTPSServer(t *testing.T) {
 	h.HandleFunc("/", BasicAuth("u", "p"), func(c *Context) {
 		fmt.Fprint(c.W, msg)
 	})
-	go h.ListenHTTPS(":8081", path+domain+".ssl.crt", path+domain+".ssl.key")
+	go h.ListenHTTPS(":8281", path+domain+".ssl.crt", path+domain+".ssl.key")
 
 	time.Sleep(time.Millisecond * 100)
 
 	{
-		res, err := HTTPSGet("https://127.0.0.1:8081")
+		res, _, err := HTTPSGet("https://127.0.0.1:8281", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -103,7 +107,7 @@ func TestNewHTTPSServer(t *testing.T) {
 	}
 
 	{
-		res, err := HTTPSGet("https://u:p@127.0.0.1:8081")
+		res, _, err := HTTPSGet("https://u:p@127.0.0.1:8281", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -114,7 +118,11 @@ func TestNewHTTPSServer(t *testing.T) {
 }
 
 func TestNewTLSServer(t *testing.T) {
-	h := NewHST(nil)
+	httpAndTLS := NewHandlers()
+	httpAndTLS.HandlerFunc("/hANDt", func(c *Context) {
+		fmt.Fprint(c.W, msg)
+	})
+	h := NewHST(&httpAndTLS)
 	h.HandleFunc("/",
 		func(c *Context) {
 			fmt.Fprint(c.W, msg)
@@ -122,16 +130,70 @@ func TestNewTLSServer(t *testing.T) {
 		}, func(c *Context) {
 			fmt.Fprint(c.W, msg)
 		})
-	go h.ListenTLS(":8082", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key")
+	h.HandleFunc("/SetSession", func(c *Context) {
+		c.SessionSet("a", msg, time.Minute)
+	})
+	h.HandleFunc("/GetSession", func(c *Context) {
+		v := c.SessionGet("a")
+		if v == nil {
+			fmt.Fprint(c.W, "...")
+			return
+		}
+		fmt.Fprint(c.W, v.(string))
+	})
+	go h.ListenTLS(":8282", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key")
 
-	time.Sleep(time.Millisecond * 100)
+	h2 := NewHST(&httpAndTLS)
+	go h2.ListenHTTP(":8283")
 
-	res, err := TLSSGet("https://127.0.0.1:8082", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key")
-	if err != nil {
-		t.Fatal(err)
+	time.Sleep(time.Millisecond * 200)
+
+	{
+		res, _, err := HTTPGet("http://127.0.0.1:8283/hANDt", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(res) != msg {
+			t.Fatal(string(res))
+		}
 	}
-	if string(res) != msg {
-		t.Fatal(string(res))
+	{
+		res, _, err := TLSSGet("https://127.0.0.1:8282/hANDt", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(res) != msg {
+			t.Fatal(string(res))
+		}
+	}
+	{
+		res, _, err := TLSSGet("https://127.0.0.1:8282", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(res) != msg {
+			t.Fatal(string(res))
+		}
+	}
+	{
+		_, cs, _ := TLSSGet("https://127.0.0.1:8282/SetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "")
+		cookie := ""
+		for _, v := range cs {
+			if v.Name == SESSIONKEY {
+				cookie = v.Value
+				break
+			}
+		}
+		if cookie != "" {
+			log.Println(cookie)
+		}
+		res, _, err := TLSSGet("https://127.0.0.1:8282/GetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", SESSIONKEY+"="+cookie)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(res) != msg {
+			t.Fatal(string(res))
+		}
 	}
 }
 

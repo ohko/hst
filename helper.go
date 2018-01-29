@@ -28,40 +28,44 @@ func Shutdown(hs []*HST, waitTime time.Duration, sig ...os.Signal) {
 }
 
 // HTTPGet 获取http内容
-func HTTPGet(url string) ([]byte, error) {
-	res, err := http.Get(url)
+func HTTPGet(url, cookie string) ([]byte, []*http.Cookie, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("Cookie", cookie)
+	res, err := (&http.Client{}).Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	bs, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer res.Body.Close()
-	return bs, nil
+	return bs, res.Cookies(), nil
 }
 
 // HTTPSGet 获取https内容
-func HTTPSGet(url string) ([]byte, error) {
+func HTTPSGet(url, cookie string) ([]byte, []*http.Cookie, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	res, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("Cookie", cookie)
+	res, err := client.Do(req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer res.Body.Close()
 	bs, err := ioutil.ReadAll(res.Body)
-	return bs, nil
+	return bs, res.Cookies(), nil
 }
 
 // TLSSGet 获取tls内容
-func TLSSGet(url, ca, crt, key string) ([]byte, error) {
+func TLSSGet(url, ca, crt, key, cookie string) ([]byte, []*http.Cookie, error) {
 	caCrt, err := ioutil.ReadFile(ca)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pool := x509.NewCertPool()
@@ -69,7 +73,7 @@ func TLSSGet(url, ca, crt, key string) ([]byte, error) {
 
 	cliCrt, err := tls.LoadX509KeyPair(crt, key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	tr := &http.Transport{
@@ -79,15 +83,18 @@ func TLSSGet(url, ca, crt, key string) ([]byte, error) {
 			InsecureSkipVerify: true,
 		},
 	}
+
 	client := &http.Client{Transport: tr}
-	res, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("Cookie", cookie)
+	res, err := client.Do(req)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer res.Body.Close()
 	bs, err := ioutil.ReadAll(res.Body)
-	return bs, nil
+	return bs, res.Cookies(), nil
 }
 
 // MakeGUID 生成唯一的GUID
