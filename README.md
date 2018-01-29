@@ -9,6 +9,8 @@
 - 自签证书生成
 - 支持中间件
 - 支持Session
+- 支持Render渲染模版
+- Static支持gzip输出
 
 # 安装
 ``` shell

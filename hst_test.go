@@ -1,6 +1,7 @@
 package hst
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -132,4 +133,41 @@ func TestNewTLSServer(t *testing.T) {
 	if string(res) != msg {
 		t.Fatal(string(res))
 	}
+}
+
+func BenchmarkA(t *testing.B) {
+	t.ResetTimer()
+	t.SetBytes(100)
+	for i := 0; i < t.N; i++ {
+		panicRecover()
+	}
+}
+
+func BenchmarkB(t *testing.B) {
+	t.ResetTimer()
+	t.SetBytes(100)
+	for i := 0; i < t.N; i++ {
+		noPanicRecover()
+	}
+}
+
+func panicRecover() {
+	defer func() {
+		recover()
+	}()
+	panic(errors.New("nil"))
+}
+
+func noPanicRecover() error {
+	defer func() {
+		recover()
+	}()
+	if err := do(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func do() error {
+	return errors.New("nil")
 }

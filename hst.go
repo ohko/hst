@@ -151,6 +151,16 @@ func (o *HST) Static(partten, path string) {
 	o.handle.Handle(partten, http.StripPrefix(partten, http.FileServer(http.Dir(path))))
 }
 
+// StaticGzip 静态文件，增加gzip压缩
+func (o *HST) StaticGzip(partten, path string) {
+	o.handle.HandleFunc(partten, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := NewGzip(w)
+		http.StripPrefix(partten, http.FileServer(http.Dir(path))).ServeHTTP(gz, r)
+		gz.CloseGzip()
+	})
+}
+
 // HandlePfx 输出pfx证书给浏览器安装
 // Example:
 //		HandlePfx("/ssl.pfx", "/a/b/c.ssl.pfx"))
