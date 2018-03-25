@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -22,9 +23,10 @@ type HST struct {
 	session Session
 
 	// template
-	templateDelims []string
-	templatePath   string
-	layout         map[string][]string
+	templateDelims  []string
+	templatePath    string
+	templateFuncMap template.FuncMap
+	layout          map[string][]string
 }
 
 // HandlerFunc ...
@@ -264,6 +266,12 @@ func (o *HST) HandlePfx(partten, pfxPath string) *HST {
 // SetDelims 定义模板符号
 func (o *HST) SetDelims(left, right string) *HST {
 	o.templateDelims = []string{left, right}
+	return o
+}
+
+// SetTemplateFunc 设置模板函数
+func (o *HST) SetTemplateFunc(funcMap template.FuncMap) *HST {
+	o.templateFuncMap = funcMap
 	return o
 }
 

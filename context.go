@@ -18,6 +18,9 @@ type Context struct {
 	W       http.ResponseWriter
 	R       *http.Request
 	close   bool
+
+	// template
+	templateFuncMap template.FuncMap
 }
 
 // Close 结束后面的流程
@@ -69,6 +72,12 @@ func (o *Context) HTML(data string) {
 	fmt.Fprint(o.W, data)
 }
 
+// SetTemplateFunc 设置模板函数
+func (o *Context) SetTemplateFunc(funcMap template.FuncMap) *Context {
+	o.templateFuncMap = funcMap
+	return o
+}
+
 // LayoutRender 渲染layout模版
 func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...string) {
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -90,7 +99,22 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 	for k, v := range tpls {
 		tpls[k] = o.hst.templatePath + v
 	}
-	tpl, err := template.New(layout).Delims(left, right).ParseFiles(tpls[:]...)
+
+	// func
+	funcs := template.FuncMap{}
+	if o.hst.templateFuncMap != nil {
+		for k, v := range o.hst.templateFuncMap {
+			funcs[k] = v
+		}
+	}
+	if o.templateFuncMap != nil {
+		for k, v := range o.templateFuncMap {
+			funcs[k] = v
+		}
+	}
+
+	// parse
+	tpl, err := template.New(layout).Funcs(funcs).Delims(left, right).ParseFiles(tpls[:]...)
 	if err != nil {
 		o.HTML(err.Error())
 		return
