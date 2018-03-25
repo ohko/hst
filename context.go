@@ -13,6 +13,7 @@ import (
 
 // Context 上下文数据
 type Context struct {
+	hst     *HST
 	session Session
 	W       http.ResponseWriter
 	R       *http.Request
@@ -65,6 +66,37 @@ func (o *Context) JSON2(no int, data interface{}) error {
 func (o *Context) HTML(data string) {
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprint(o.W, data)
+}
+
+// LayoutRender 渲染layout模版
+func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...string) {
+	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Delims
+	left, right := "{{", "}}"
+	if len(o.hst.templateDelims) == 2 {
+		left, right = o.hst.templateDelims[0], o.hst.templateDelims[1]
+	}
+
+	// layout
+	if _, ok := o.hst.layout[layout]; !ok {
+		o.HTML("layout not found: " + layout)
+		return
+	}
+
+	// parse
+	tpls := append(o.hst.layout[layout], tplFiles[:]...)
+	tpl, err := template.New(layout).Delims(left, right).ParseFiles(tpls[:]...)
+	if err != nil {
+		o.HTML(err.Error())
+		return
+	}
+
+	// execute
+	if err := tpl.Execute(o.W, data); err != nil {
+		o.HTML(err.Error())
+		return
+	}
 }
 
 // RenderFiles 渲染模版

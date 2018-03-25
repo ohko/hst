@@ -17,10 +17,17 @@ type HST struct {
 	hs      *Handlers
 	Addr    string
 	session Session
+
+	// template
+	templateDelims []string
+	layout         map[string][]string
 }
 
 // HandlerFunc ...
 type HandlerFunc func(*Context)
+
+// H ...
+type H map[string]interface{}
 
 // NewHST ...
 func NewHST(handlers *Handlers) *HST {
@@ -28,6 +35,7 @@ func NewHST(handlers *Handlers) *HST {
 	o.session = NewMemorySession()
 	o.handle = http.NewServeMux()
 	o.hs = handlers
+	o.layout = make(map[string][]string)
 	return o
 }
 
@@ -104,9 +112,10 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 // HandleFunc ...
 // Example:
 //		HandleFunc("/", func(c *hst.Context){}, func(c *hst.Context){})
-func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) {
+func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) *HST {
 	o.handle.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		c := &Context{
+			hst:     o,
 			session: o.session,
 			W:       w,
 			R:       r,
@@ -119,6 +128,7 @@ func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) {
 			}
 		}
 	})
+	return o
 }
 
 // Shutdown 优雅得关闭服务
@@ -129,7 +139,7 @@ func (o *HST) Shutdown(waitTime time.Duration) {
 }
 
 // Favicon 显示favicon.ico
-func (o *HST) Favicon() {
+func (o *HST) Favicon() *HST {
 	o.handle.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		bs := []byte{0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x10, 0x10, 0x02, 0x00, 0x01, 0x00, 0x01, 0x00, 0xb0, 0x00,
 			0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x20, 0x00,
@@ -147,27 +157,30 @@ func (o *HST) Favicon() {
 		w.Header().Set("Content-Type", "image/x-icon")
 		w.Write(bs)
 	})
+	return o
 }
 
 // Static 静态文件
-func (o *HST) Static(partten, path string) {
+func (o *HST) Static(partten, path string) *HST {
 	o.handle.Handle(partten, http.StripPrefix(partten, http.FileServer(http.Dir(path))))
+	return o
 }
 
 // StaticGzip 静态文件，增加gzip压缩
-func (o *HST) StaticGzip(partten, path string) {
+func (o *HST) StaticGzip(partten, path string) *HST {
 	o.handle.HandleFunc(partten, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Encoding", "gzip")
 		gz := NewGzip(w)
 		http.StripPrefix(partten, http.FileServer(http.Dir(path))).ServeHTTP(gz, r)
 		gz.CloseGzip()
 	})
+	return o
 }
 
 // HandlePfx 输出pfx证书给浏览器安装
 // Example:
 //		HandlePfx("/ssl.pfx", "/a/b/c.ssl.pfx"))
-func (o *HST) HandlePfx(partten, pfxPath string) {
+func (o *HST) HandlePfx(partten, pfxPath string) *HST {
 	o.handle.HandleFunc(partten, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/x-x509-ca-cert")
 		caCrt, err := ioutil.ReadFile(pfxPath)
@@ -177,4 +190,17 @@ func (o *HST) HandlePfx(partten, pfxPath string) {
 		}
 		w.Write(caCrt)
 	})
+	return o
+}
+
+// SetDelims 定义模板符号
+func (o *HST) SetDelims(left, right string) *HST {
+	o.templateDelims = []string{left, right}
+	return o
+}
+
+// SetLayout 定义layout模板
+func (o *HST) SetLayout(name string, files ...string) *HST {
+	o.layout[name] = files
+	return o
 }
