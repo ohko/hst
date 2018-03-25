@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
+	"runtime"
+	"strings"
 	"time"
 )
 
@@ -20,6 +23,7 @@ type HST struct {
 
 	// template
 	templateDelims []string
+	templatePath   string
 	layout         map[string][]string
 }
 
@@ -29,8 +33,15 @@ type HandlerFunc func(*Context)
 // H ...
 type H map[string]interface{}
 
+// hstError 用于提前终止流程
+type hstError struct{ s string }
+
+func (o *hstError) Error() string { return o.s }
+
 // NewHST ...
 func NewHST(handlers *Handlers) *HST {
+	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	o := new(HST)
 	o.session = NewMemorySession()
 	o.handle = http.NewServeMux()
@@ -113,6 +124,7 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 // Example:
 //		HandleFunc("/", func(c *hst.Context){}, func(c *hst.Context){})
 func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) *HST {
+	log.Println("handle:", pattern)
 	o.handle.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		c := &Context{
 			hst:     o,
@@ -122,12 +134,68 @@ func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) *HST {
 			close:   false,
 		}
 		for _, v := range handler {
-			v(c)
+			func(v HandlerFunc, c *Context) {
+				defer func() {
+					if err := recover(); err != nil {
+						switch err.(type) {
+						case hstError, *hstError:
+							c.close = true
+						default:
+							log.Println(err)
+							c.HTML("found error")
+						}
+					}
+				}()
+				v(c)
+			}(v, c)
 			if c.close {
 				break
 			}
 		}
 	})
+	return o
+}
+
+// RegisterHandle ...
+// Example:
+//		RegisterHandle(&User{}, &Other{})
+func (o *HST) RegisterHandle(classes ...interface{}) *HST {
+	fixName := func(name string) string {
+		r := []rune(name)
+		a := map[rune]rune{'A': 'a', 'B': 'b', 'C': 'c', 'D': 'd', 'E': 'e', 'F': 'f', 'G': 'g', 'H': 'h', 'I': 'i', 'J': 'j', 'K': 'k', 'L': 'l', 'M': 'm', 'N': 'n', 'O': 'o', 'P': 'p', 'Q': 'q', 'R': 'r', 'S': 's', 'T': 't', 'U': 'u', 'V': 'v', 'W': 'w', 'X': 'x', 'Y': 'y', 'Z': 'z'}
+		b := map[string]string{"A": "_a", "B": "_b", "C": "_c", "D": "_d", "E": "_e", "F": "_f", "G": "_g", "H": "_h", "I": "_i", "J": "_j", "K": "_k", "L": "_l", "M": "_m", "N": "_n", "O": "_o", "P": "_p", "Q": "_q", "R": "_r", "S": "_s", "T": "_t", "U": "_u", "V": "_v", "W": "_w", "X": "_x", "Y": "_y", "Z": "_z"}
+
+		if v, ok := a[r[0]]; ok {
+			r[0] = v
+		}
+
+		s := string(r)
+		for k, v := range b {
+			s = strings.Replace(s, k, v, -1)
+		}
+		return s
+	}
+
+	for _, c := range classes {
+		name := reflect.TypeOf(c).Elem().Name()
+		if strings.HasSuffix(name, "Controller") {
+			name = name[:len(name)-10]
+		}
+		name = "/" + fixName(name)
+		if name == "/index" {
+			name = ""
+		}
+		for i := 0; i < reflect.TypeOf(c).NumMethod(); i++ {
+			method := "/" + fixName(reflect.TypeOf(c).Method(i).Name)
+			if method == "/index" {
+				method = "/"
+			}
+			path := name + method
+			o.HandleFunc(path, func(v reflect.Value) HandlerFunc {
+				return func(c *Context) { v.Call([]reflect.Value{reflect.ValueOf(c)}) }
+			}(reflect.ValueOf(c).Method(i)))
+		}
+	}
 	return o
 }
 
@@ -196,6 +264,15 @@ func (o *HST) HandlePfx(partten, pfxPath string) *HST {
 // SetDelims 定义模板符号
 func (o *HST) SetDelims(left, right string) *HST {
 	o.templateDelims = []string{left, right}
+	return o
+}
+
+// SetTemplatePath 设置模板路径
+func (o *HST) SetTemplatePath(path string) *HST {
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
+	}
+	o.templatePath = path
 	return o
 }
 

@@ -23,6 +23,7 @@ type Context struct {
 // Close 结束后面的流程
 func (o *Context) Close() {
 	o.close = true
+	panic(&hstError{"end"})
 }
 
 // JSON 返回json数据，自动识别jsonp
@@ -86,6 +87,9 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 
 	// parse
 	tpls := append(o.hst.layout[layout], tplFiles[:]...)
+	for k, v := range tpls {
+		tpls[k] = o.hst.templatePath + v
+	}
 	tpl, err := template.New(layout).Delims(left, right).ParseFiles(tpls[:]...)
 	if err != nil {
 		o.HTML(err.Error())
