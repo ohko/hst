@@ -144,6 +144,18 @@ func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) *HST {
 							c.close = true
 						default:
 							log.Println(err)
+							dep := 0
+							for i := 1; i < 10; i++ {
+								_, file, line, ok := runtime.Caller(i)
+								if !ok {
+									break
+								}
+								if strings.Contains(file, "/runtime/") || strings.Contains(file, "/reflect/") {
+									continue
+								}
+								log.Printf("%s∟%s(%d)\n", strings.Repeat(" ", dep), file, line)
+								dep++
+							}
 							c.HTML("found error")
 						}
 					}
