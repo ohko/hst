@@ -43,7 +43,7 @@ func TestNewHTTPServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	{
-		res, _, err := HTTPGet("http://u:p@127.0.0.1:8280", "")
+		res, _, err := HTTPRequest("GET", "http://u:p@127.0.0.1:8280", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,7 +52,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := HTTPGet("http://127.0.0.1:8280/abc/LICENSE", "")
+		res, _, err := HTTPRequest("GET", "http://127.0.0.1:8280/abc/LICENSE", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -61,7 +61,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := HTTPGet("http://127.0.0.1:8280/favicon.ico", "")
+		res, _, err := HTTPRequest("GET", "http://127.0.0.1:8280/favicon.ico", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -70,7 +70,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := HTTPGet("http://127.0.0.1:8280/ssl.pfx", "")
+		res, _, err := HTTPRequest("GET", "http://127.0.0.1:8280/ssl.pfx", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -97,7 +97,7 @@ func TestNewHTTPSServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	{
-		res, _, err := HTTPSGet("https://127.0.0.1:8281", "")
+		res, _, err := HTTPSRequest("GET", "https://127.0.0.1:8281", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -107,7 +107,7 @@ func TestNewHTTPSServer(t *testing.T) {
 	}
 
 	{
-		res, _, err := HTTPSGet("https://u:p@127.0.0.1:8281", "")
+		res, _, err := HTTPSRequest("GET", "https://u:p@127.0.0.1:8281", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -149,7 +149,7 @@ func TestNewTLSServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 200)
 
 	{
-		res, _, err := HTTPGet("http://127.0.0.1:8283/hANDt", "")
+		res, _, err := HTTPRequest("GET", "http://127.0.0.1:8283/hANDt", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -158,7 +158,7 @@ func TestNewTLSServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := TLSSGet("https://127.0.0.1:8282/hANDt", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "")
+		res, _, err := TLSSRequest("GET", "https://127.0.0.1:8282/hANDt", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -167,7 +167,7 @@ func TestNewTLSServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := TLSSGet("https://127.0.0.1:8282", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "")
+		res, _, err := TLSSRequest("GET", "https://127.0.0.1:8282", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,7 +176,7 @@ func TestNewTLSServer(t *testing.T) {
 		}
 	}
 	{
-		_, cs, _ := TLSSGet("https://127.0.0.1:8282/SetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "")
+		_, cs, _ := TLSSRequest("GET", "https://127.0.0.1:8282/SetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "", "")
 		cookie := ""
 		for _, v := range cs {
 			if v.Name == SESSIONKEY {
@@ -187,7 +187,7 @@ func TestNewTLSServer(t *testing.T) {
 		if cookie != "" {
 			log.Println(cookie)
 		}
-		res, _, err := TLSSGet("https://127.0.0.1:8282/GetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", SESSIONKEY+"="+cookie)
+		res, _, err := TLSSRequest("GET", "https://127.0.0.1:8282/GetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", SESSIONKEY+"="+cookie, "")
 		if err != nil {
 			t.Fatal(err)
 		}

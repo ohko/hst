@@ -27,9 +27,12 @@ func Shutdown(hs []*HST, waitTime time.Duration, sig ...os.Signal) {
 	}
 }
 
-// HTTPGet 获取http内容
-func HTTPGet(url, cookie string) ([]byte, []*http.Cookie, error) {
-	req, err := http.NewRequest("GET", url, nil)
+// HTTPRequest 获取http内容
+func HTTPRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
+	req, err := http.NewRequest(method, url, strings.NewReader(data))
+	if method == "POST" {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 	req.Header.Set("Cookie", cookie)
 	res, err := (&http.Client{}).Do(req)
 	if err != nil {
@@ -43,13 +46,16 @@ func HTTPGet(url, cookie string) ([]byte, []*http.Cookie, error) {
 	return bs, res.Cookies(), nil
 }
 
-// HTTPSGet 获取https内容
-func HTTPSGet(url, cookie string) ([]byte, []*http.Cookie, error) {
+// HTTPSRequest 获取https内容
+func HTTPSRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(method, url, strings.NewReader(data))
+	if method == "POST" {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 	req.Header.Set("Cookie", cookie)
 	res, err := client.Do(req)
 
@@ -61,8 +67,8 @@ func HTTPSGet(url, cookie string) ([]byte, []*http.Cookie, error) {
 	return bs, res.Cookies(), nil
 }
 
-// TLSSGet 获取tls内容
-func TLSSGet(url, ca, crt, key, cookie string) ([]byte, []*http.Cookie, error) {
+// TLSSRequest 获取tls内容
+func TLSSRequest(method, url, ca, crt, key, cookie, data string) ([]byte, []*http.Cookie, error) {
 	caCrt, err := ioutil.ReadFile(ca)
 	if err != nil {
 		return nil, nil, err
@@ -85,7 +91,10 @@ func TLSSGet(url, ca, crt, key, cookie string) ([]byte, []*http.Cookie, error) {
 	}
 
 	client := &http.Client{Transport: tr}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(method, url, strings.NewReader(data))
+	if method == "POST" {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 	req.Header.Set("Cookie", cookie)
 	res, err := client.Do(req)
 
