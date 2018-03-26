@@ -163,16 +163,16 @@ func (o *Context) RenderContent(delimLeft, delimRight string, data interface{}, 
 }
 
 // SessionSet 设置Session
-func (o *Context) SessionSet(key string, value interface{}, expire time.Duration) {
-	o.session.Set(o, key, value, expire)
+func (o *Context) SessionSet(key string, value interface{}, expire time.Duration) error {
+	return o.session.Set(o, key, value, expire)
 }
 
 // SessionGet 读取Session
-func (o *Context) SessionGet(key string) interface{} {
+func (o *Context) SessionGet(key string) (interface{}, error) {
 	return o.session.Get(o, key)
 }
 
 // SessionDestory 销毁Session
-func (o *Context) SessionDestory() {
-	o.session.Destory(o)
+func (o *Context) SessionDestory() error {
+	return o.session.Destory(o)
 }

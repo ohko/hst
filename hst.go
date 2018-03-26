@@ -46,7 +46,6 @@ func NewHST(handlers *Handlers) *HST {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	o := new(HST)
-	o.session = NewMemorySession()
 	o.handle = http.NewServeMux()
 	o.hs = handlers
 	o.layout = make(map[string][]string)
@@ -300,5 +299,11 @@ func (o *HST) SetTemplatePath(path string) *HST {
 // SetLayout 定义layout模板
 func (o *HST) SetLayout(name string, files ...string) *HST {
 	o.layout[name] = files
+	return o
+}
+
+// SetSession 设置Session
+func (o *HST) SetSession(sess Session) *HST {
+	o.session = sess
 	return o
 }
