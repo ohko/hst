@@ -16,11 +16,12 @@ import (
 
 // HST ...
 type HST struct {
-	s       *http.Server
-	handle  *http.ServeMux
-	hs      *Handlers
-	Addr    string
-	session Session
+	s           *http.Server
+	handle      *http.ServeMux
+	hs          *Handlers
+	Addr        string
+	session     Session
+	CrossOrigin string // 支持跨域 "*" / "a.com,b.com"
 
 	// template
 	templateDelims  []string

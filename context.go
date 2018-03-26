@@ -32,6 +32,10 @@ func (o *Context) Close() {
 // JSON 返回json数据，自动识别jsonp
 func (o *Context) JSON(data interface{}) error {
 	defer o.Close()
+	if o.hst.CrossOrigin != "" {
+		o.W.Header().Set("Access-Control-Allow-Origin", o.hst.CrossOrigin)
+		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
 	o.W.Header().Set("Content-Type", "application/json")
 	var ww io.Writer
 
