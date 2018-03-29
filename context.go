@@ -33,6 +33,9 @@ func (o *Context) Close() {
 func (o *Context) JSON(data interface{}) error {
 	defer o.Close()
 	if o.hst.CrossOrigin != "" {
+		if o.hst.CrossOrigin == "*" {
+			o.hst.CrossOrigin = ""
+		}
 		o.W.Header().Set("Access-Control-Allow-Origin", o.hst.CrossOrigin)
 		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
