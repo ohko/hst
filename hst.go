@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // HST ...
@@ -50,6 +52,38 @@ func NewHST(handlers *Handlers) *HST {
 	o.hs = handlers
 	o.layout = make(map[string][]string)
 	return o
+}
+
+// ListenAutoCert 同时监听http/https，自动获取https证书
+func (o *HST) ListenAutoCert(cacheDir string, hosts ...string) error {
+	m := &autocert.Manager{
+		Cache:      autocert.DirCache(cacheDir),
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(hosts...),
+	}
+
+	log.Println("Listen http://", hosts)
+	go func() {
+		log.Println(http.ListenAndServe(":http", m.HTTPHandler(nil)))
+	}()
+
+	o.s = &http.Server{
+		Addr:      ":https",
+		Handler:   o.handle,
+		TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
+	}
+	if o.hs != nil {
+		for k, v := range *o.hs {
+			o.HandleFunc(k, v...)
+		}
+	}
+
+	log.Println("Listen https://", hosts)
+	if err := o.s.ListenAndServeTLS("", ""); err != nil {
+		log.Println("Error https://", err)
+		return err
+	}
+	return nil
 }
 
 // ListenHTTP 启动HTTP服务
