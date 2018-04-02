@@ -111,6 +111,9 @@ func (o *SessionFile) Destory(c *Context) error {
 		return err
 	}
 
+	ck.Expires = time.Now().Add(-1)
+	http.SetCookie(c.W, ck)
+
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
