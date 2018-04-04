@@ -88,6 +88,7 @@ func (o *Context) SetTemplateFunc(funcMap template.FuncMap) *Context {
 
 // LayoutRender 渲染layout模版
 func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...string) {
+	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Delims
@@ -137,6 +138,7 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 
 // RenderFiles 渲染模版
 func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tplFiles ...string) {
+	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	t, err := template.New("").Delims(delimLeft, delimRight).ParseFiles(tplFiles...)
 	if err != nil {
@@ -151,6 +153,7 @@ func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tp
 
 // RenderContent 渲染内容
 func (o *Context) RenderContent(delimLeft, delimRight string, data interface{}, htm ...string) {
+	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var err error
 	t := template.New("")
