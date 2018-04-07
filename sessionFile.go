@@ -94,6 +94,10 @@ func (o *SessionFile) Get(c *Context, key string) (interface{}, error) {
 		return nil, err
 	}
 
+	defer func() {
+		os.Chtimes(o.path+ck.Value, time.Now(), time.Now())
+	}()
+
 	if v, ok := data[key]; ok {
 		if v.Expire.Sub(time.Now()) > 0 {
 			return v.Data, nil

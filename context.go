@@ -76,6 +76,7 @@ func (o *Context) JSON2(no int, data interface{}) error {
 
 // HTML 输出HTML代码
 func (o *Context) HTML(data string) {
+	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprint(o.W, data)
 }
