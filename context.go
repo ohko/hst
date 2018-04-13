@@ -147,7 +147,7 @@ func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tp
 		return
 	}
 	name := filepath.Base(tplFiles[len(tplFiles)-1])
-	if err := t.ExecuteTemplate(o.W, name, nil); err != nil {
+	if err := t.ExecuteTemplate(o.W, name, data); err != nil {
 		fmt.Fprint(o.W, err)
 	}
 }
@@ -165,7 +165,7 @@ func (o *Context) RenderContent(delimLeft, delimRight string, data interface{}, 
 			return
 		}
 	}
-	if err := t.Delims(delimLeft, delimRight).Execute(o.W, nil); err != nil {
+	if err := t.Delims(delimLeft, delimRight).Execute(o.W, data); err != nil {
 		fmt.Fprint(o.W, err)
 	}
 }
