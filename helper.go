@@ -27,43 +27,34 @@ func Shutdown(hs []*HST, waitTime time.Duration, sig ...os.Signal) {
 	}
 }
 
-// HTTPRequest 获取http内容
-func HTTPRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
-	req, err := http.NewRequest(method, url, strings.NewReader(data))
-	if method == "POST" {
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	}
-	req.Header.Set("Cookie", cookie)
-	res, err := (&http.Client{}).Do(req)
-	if err != nil {
-		return nil, nil, err
-	}
-	bs, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer res.Body.Close()
-	return bs, res.Cookies(), nil
-}
+// HSRequest 获取http内容
+func HSRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
+	var client *http.Client
 
-// HTTPSRequest 获取https内容
-func HTTPSRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	if strings.HasPrefix(url, "https://") {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = &http.Client{Transport: tr}
+	} else {
+		client = &http.Client{}
 	}
-	client := &http.Client{Transport: tr}
+
 	req, err := http.NewRequest(method, url, strings.NewReader(data))
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 	req.Header.Set("Cookie", cookie)
 	res, err := client.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
 
+	bs, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer res.Body.Close()
-	bs, err := ioutil.ReadAll(res.Body)
 	return bs, res.Cookies(), nil
 }
 
@@ -97,12 +88,15 @@ func TLSSRequest(method, url, ca, crt, key, cookie, data string) ([]byte, []*htt
 	}
 	req.Header.Set("Cookie", cookie)
 	res, err := client.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
 
+	bs, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer res.Body.Close()
-	bs, err := ioutil.ReadAll(res.Body)
 	return bs, res.Cookies(), nil
 }
 
