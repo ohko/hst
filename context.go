@@ -141,7 +141,26 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tplFiles ...string) {
 	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
-	t, err := template.New("").Delims(delimLeft, delimRight).ParseFiles(tplFiles...)
+
+	// Delims
+	if delimLeft == "" {
+		delimLeft, delimRight = o.hst.templateDelims[0], o.hst.templateDelims[1]
+	}
+
+	// func
+	funcs := template.FuncMap{}
+	if o.hst.templateFuncMap != nil {
+		for k, v := range o.hst.templateFuncMap {
+			funcs[k] = v
+		}
+	}
+	if o.templateFuncMap != nil {
+		for k, v := range o.templateFuncMap {
+			funcs[k] = v
+		}
+	}
+
+	t, err := template.New("").Funcs(funcs).Delims(delimLeft, delimRight).ParseFiles(tplFiles...)
 	if err != nil {
 		fmt.Fprint(o.W, err)
 		return
