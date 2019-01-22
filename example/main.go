@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
+	"hst"
 	"time"
-
-	"github.com/ohko/hst"
 )
 
 func main() {
-	s := hst.NewHST(nil)
+	s := hst.New(nil)
 	s.HandleFunc("/", func(c *hst.Context) {
 		fmt.Fprintln(c.W, "hello")
 	})
@@ -18,5 +17,6 @@ func main() {
 	s.HandleFunc("/time", func(c *hst.Context) {
 		fmt.Fprintln(c.W, time.Now().Format("2006-01-02 15:04:05"))
 	})
-	s.ListenAutoCert(".https", "xx.example.com")
+	// s.ListenAutoCert(".https", "xx.example.com")
+	s.ListenHTTP(":8080")
 }

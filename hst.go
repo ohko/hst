@@ -35,16 +35,13 @@ type HST struct {
 // HandlerFunc ...
 type HandlerFunc func(*Context)
 
-// H ...
-type H map[string]interface{}
-
 // hstError 用于提前终止流程
 type hstError struct{ s string }
 
 func (o *hstError) Error() string { return o.s }
 
-// NewHST ...
-func NewHST(handlers *Handlers) *HST {
+// New ...
+func New(handlers *Handlers) *HST {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime)
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	o := new(HST)
@@ -190,6 +187,7 @@ func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) *HST {
 								log.Printf("%s∟%s(%d)\n", strings.Repeat(" ", dep), file, line)
 								dep++
 							}
+							defer func() { recover() }()
 							c.HTML("found error")
 						}
 					}
@@ -213,10 +211,12 @@ func (o *HST) RegisterHandle(classes ...interface{}) *HST {
 		a := map[rune]rune{'A': 'a', 'B': 'b', 'C': 'c', 'D': 'd', 'E': 'e', 'F': 'f', 'G': 'g', 'H': 'h', 'I': 'i', 'J': 'j', 'K': 'k', 'L': 'l', 'M': 'm', 'N': 'n', 'O': 'o', 'P': 'p', 'Q': 'q', 'R': 'r', 'S': 's', 'T': 't', 'U': 'u', 'V': 'v', 'W': 'w', 'X': 'x', 'Y': 'y', 'Z': 'z'}
 		b := map[string]string{"A": "_a", "B": "_b", "C": "_c", "D": "_d", "E": "_e", "F": "_f", "G": "_g", "H": "_h", "I": "_i", "J": "_j", "K": "_k", "L": "_l", "M": "_m", "N": "_n", "O": "_o", "P": "_p", "Q": "_q", "R": "_r", "S": "_s", "T": "_t", "U": "_u", "V": "_v", "W": "_w", "X": "_x", "Y": "_y", "Z": "_z"}
 
+		// 首字母小写
 		if v, ok := a[r[0]]; ok {
 			r[0] = v
 		}
 
+		// 除首字母外，其它大写字母替换成下划线加小写
 		s := string(r)
 		for k, v := range b {
 			s = strings.Replace(s, k, v, -1)
@@ -286,9 +286,9 @@ func (o *HST) Static(partten, path string) *HST {
 func (o *HST) StaticGzip(partten, path string) *HST {
 	o.handle.HandleFunc(partten, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Encoding", "gzip")
-		gz := NewGzip(w)
+		gz := newGzip(w)
 		http.StripPrefix(partten, http.FileServer(http.Dir(path))).ServeHTTP(gz, r)
-		gz.CloseGzip()
+		gz.Close()
 	})
 	return o
 }

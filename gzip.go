@@ -5,35 +5,33 @@ import (
 	"net/http"
 )
 
-// Gzip ...
-type Gzip struct {
+type hstGzip struct {
 	gz *gzip.Writer
 	rw http.ResponseWriter
 }
 
-// NewGzip ...
-func NewGzip(w http.ResponseWriter) *Gzip {
+func newGzip(w http.ResponseWriter) *hstGzip {
 	w.Header().Set("Content-Encoding", "gzip")
 	gz, _ := gzip.NewWriterLevel(w, gzip.BestCompression)
-	return &Gzip{gz: gz, rw: w}
+	return &hstGzip{gz: gz, rw: w}
 }
 
-func (o *Gzip) Write(bs []byte) (int, error) {
+func (o *hstGzip) Write(bs []byte) (int, error) {
 	o.gz.Flush()
 	return o.gz.Write(bs)
 }
 
 // Header ...
-func (o *Gzip) Header() http.Header {
+func (o *hstGzip) Header() http.Header {
 	return o.rw.Header()
 }
 
 // WriteHeader ...
-func (o *Gzip) WriteHeader(n int) {
+func (o *hstGzip) WriteHeader(n int) {
 	o.rw.WriteHeader(n)
 }
 
 // CloseGzip ...
-func (o *Gzip) CloseGzip() {
+func (o *hstGzip) Close() {
 	o.gz.Close()
 }

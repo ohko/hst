@@ -27,8 +27,8 @@ func Shutdown(hs []*HST, waitTime time.Duration, sig ...os.Signal) {
 	}
 }
 
-// HSRequest 获取http内容
-func HSRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
+// Request 获取http/https内容
+func Request(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
 	var client *http.Client
 
 	if strings.HasPrefix(url, "https://") {
@@ -58,8 +58,8 @@ func HSRequest(method, url, cookie, data string) ([]byte, []*http.Cookie, error)
 	return bs, res.Cookies(), nil
 }
 
-// TLSSRequest 获取tls内容
-func TLSSRequest(method, url, ca, crt, key, cookie, data string) ([]byte, []*http.Cookie, error) {
+// RequestTLS 获取tls内容
+func RequestTLS(method, url, ca, crt, key, cookie, data string) ([]byte, []*http.Cookie, error) {
 	caCrt, err := ioutil.ReadFile(ca)
 	if err != nil {
 		return nil, nil, err
