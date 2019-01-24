@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"hst"
 	"time"
+
+	"github.com/ohko/hst"
 )
 
 func main() {
