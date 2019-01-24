@@ -20,6 +20,7 @@ type Context struct {
 	close   bool
 
 	// template
+	templateDelims  []string
 	templateFuncMap template.FuncMap
 }
 
@@ -81,6 +82,12 @@ func (o *Context) HTML(data string) {
 	fmt.Fprint(o.W, data)
 }
 
+// SetDelims 定义模板符号
+func (o *Context) SetDelims(left, right string) *Context {
+	o.templateDelims = []string{left, right}
+	return o
+}
+
 // SetTemplateFunc 设置模板函数
 func (o *Context) SetTemplateFunc(funcMap template.FuncMap) *Context {
 	o.templateFuncMap = funcMap
@@ -93,9 +100,9 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Delims
-	left, right := "{{", "}}"
-	if len(o.hst.templateDelims) == 2 {
-		left, right = o.hst.templateDelims[0], o.hst.templateDelims[1]
+	left, right := o.hst.templateDelims[0], o.hst.templateDelims[1]
+	if len(o.templateDelims) == 2 {
+		left, right = o.templateDelims[0], o.templateDelims[1]
 	}
 
 	// layout
@@ -138,13 +145,14 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 }
 
 // RenderFiles 渲染模版
-func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tplFiles ...string) {
+func (o *Context) RenderFiles(data interface{}, tplFiles ...string) {
 	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Delims
-	if delimLeft == "" {
-		delimLeft, delimRight = o.hst.templateDelims[0], o.hst.templateDelims[1]
+	left, right := o.hst.templateDelims[0], o.hst.templateDelims[1]
+	if len(o.templateDelims) == 2 {
+		left, right = o.templateDelims[0], o.templateDelims[1]
 	}
 
 	// func
@@ -160,7 +168,7 @@ func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tp
 		}
 	}
 
-	t, err := template.New("").Funcs(funcs).Delims(delimLeft, delimRight).ParseFiles(tplFiles...)
+	t, err := template.New("").Funcs(funcs).Delims(left, right).ParseFiles(tplFiles...)
 	if err != nil {
 		fmt.Fprint(o.W, err)
 		return
@@ -172,19 +180,39 @@ func (o *Context) RenderFiles(delimLeft, delimRight string, data interface{}, tp
 }
 
 // RenderContent 渲染内容
-func (o *Context) RenderContent(delimLeft, delimRight string, data interface{}, htm ...string) {
+func (o *Context) RenderContent(data interface{}, htm ...string) {
 	defer o.Close()
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var err error
+
+	// Delims
+	left, right := o.hst.templateDelims[0], o.hst.templateDelims[1]
+	if len(o.templateDelims) == 2 {
+		left, right = o.templateDelims[0], o.templateDelims[1]
+	}
+
+	// func
+	funcs := template.FuncMap{}
+	if o.hst.templateFuncMap != nil {
+		for k, v := range o.hst.templateFuncMap {
+			funcs[k] = v
+		}
+	}
+	if o.templateFuncMap != nil {
+		for k, v := range o.templateFuncMap {
+			funcs[k] = v
+		}
+	}
+
 	t := template.New("")
 	for k, v := range htm {
-		t, err = t.New(fmt.Sprintf("%d", k)).Delims(delimLeft, delimRight).Parse(v)
+		t, err = t.New(fmt.Sprintf("%d", k)).Funcs(funcs).Delims(left, right).Parse(v)
 		if err != nil {
 			fmt.Fprint(o.W, err)
 			return
 		}
 	}
-	if err := t.Delims(delimLeft, delimRight).Execute(o.W, data); err != nil {
+	if err := t.Funcs(funcs).Delims(left, right).Execute(o.W, data); err != nil {
 		fmt.Fprint(o.W, err)
 	}
 }
