@@ -22,11 +22,16 @@ func Shutdown(waitTime time.Duration, hss ...*HST) {
 	log.Println("wait ctrl+c ...")
 
 	c := make(chan os.Signal)
-	signal.Notify(c, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	<-c
 
 	for _, v := range hss {
-		v.shutdown(waitTime)
+		err := v.shutdown(waitTime)
+		if err != nil {
+			log.Println(v.s.Addr, err)
+		} else {
+			log.Println(v.s.Addr, "shutdown ok.")
+		}
 	}
 }
 

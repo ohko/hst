@@ -248,10 +248,10 @@ func (o *HST) RegisterHandle(classes ...interface{}) *HST {
 }
 
 // Shutdown 优雅得关闭服务
-func (o *HST) shutdown(waitTime time.Duration) {
+func (o *HST) shutdown(waitTime time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
-	o.s.Shutdown(ctx)
+	return o.s.Shutdown(ctx)
 }
 
 // Favicon 显示favicon.ico
