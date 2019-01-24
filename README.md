@@ -20,7 +20,7 @@ go get -v github.com/ohko/hst
 # 使用
 ## http
 ``` golang
-h := NewHST(nil)
+h := New(nil)
 h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
@@ -29,13 +29,13 @@ h.ListenHTTP(":8080")
 
 ## https
 ``` golang
-h := NewHST(nil)
+h := New(nil)
 h.HandleFunc("/", func(c *Context) {
     fmt.Fprint(w, "Hello world!")
 })
 go h.ListenHTTPS(":8081", "ssl.crt", "ssl.key")
 log.Println("wait ctrl+c ...")
-Shutdown([]*HST{h}, time.Second*5)
+Shutdown(time.Second*5, h)
 ```
 
 ## tls

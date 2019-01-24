@@ -77,7 +77,7 @@ func (o *HST) ListenAutoCert(cacheDir string, hosts ...string) error {
 
 	log.Println("Listen https://", hosts)
 	if err := o.s.ListenAndServeTLS("", ""); err != nil {
-		log.Println("Error https://", err)
+		log.Println("Error https://", hosts, err)
 		return err
 	}
 	return nil
@@ -97,7 +97,7 @@ func (o *HST) ListenHTTP(addr string) error {
 
 	log.Println("Listen http://", addr)
 	if err := o.s.ListenAndServe(); err != nil {
-		log.Println("Error http://", err)
+		log.Println("Error http://", addr, err)
 		return err
 	}
 	return nil
@@ -117,7 +117,7 @@ func (o *HST) ListenHTTPS(addr, crt, key string) error {
 
 	log.Println("Listen https://", addr)
 	if err := o.s.ListenAndServeTLS(crt, key); err != nil {
-		log.Println("Error https://", err)
+		log.Println("Error https://", addr, err)
 		return err
 	}
 	return nil
@@ -147,7 +147,7 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 
 	log.Println("Listen https(tls)://", o.Addr)
 	if err := o.s.ListenAndServeTLS(crt, key); err != nil {
-		log.Println("Error https(tls)://", err)
+		log.Println("Error https(tls)://", o.Addr, err)
 		return err
 	}
 	return nil
@@ -248,7 +248,7 @@ func (o *HST) RegisterHandle(classes ...interface{}) *HST {
 }
 
 // Shutdown 优雅得关闭服务
-func (o *HST) Shutdown(waitTime time.Duration) {
+func (o *HST) shutdown(waitTime time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 	o.s.Shutdown(ctx)

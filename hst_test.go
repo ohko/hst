@@ -235,3 +235,14 @@ func noPanicRecover() error {
 func do() error {
 	return errors.New("nil")
 }
+
+func TestShutdown(t *testing.T) {
+	s1 := New(nil)
+	s2 := New(nil)
+	s3 := New(nil)
+	go s1.ListenHTTP(":8081")
+	go s2.ListenHTTP(":8082")
+	go s3.ListenHTTP(":8083")
+
+	Shutdown(time.Second*5, s1, s2, s3)
+}

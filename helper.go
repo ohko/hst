@@ -13,17 +13,20 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
 // Shutdown 等待信号，优雅的停止服务
-func Shutdown(hs []*HST, waitTime time.Duration, sig ...os.Signal) {
+func Shutdown(waitTime time.Duration, hss ...*HST) {
+	log.Println("wait ctrl+c ...")
+
 	c := make(chan os.Signal)
-	signal.Notify(c, sig...)
+	signal.Notify(c, syscall.SIGTERM)
 	<-c
 
-	for _, v := range hs {
-		v.Shutdown(waitTime)
+	for _, v := range hss {
+		v.shutdown(waitTime)
 	}
 }
 
