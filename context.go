@@ -100,9 +100,11 @@ func (o *Context) LayoutRender(layout string, data interface{}, tplFiles ...stri
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Delims
-	left, right := o.hst.templateDelims[0], o.hst.templateDelims[1]
+	var left, right string
 	if len(o.templateDelims) == 2 {
 		left, right = o.templateDelims[0], o.templateDelims[1]
+	} else if len(o.hst.templateDelims) == 2 {
+		left, right = o.hst.templateDelims[0], o.hst.templateDelims[1]
 	}
 
 	// layout
@@ -150,9 +152,11 @@ func (o *Context) RenderFiles(data interface{}, tplFiles ...string) {
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	// Delims
-	left, right := o.hst.templateDelims[0], o.hst.templateDelims[1]
+	var left, right string
 	if len(o.templateDelims) == 2 {
 		left, right = o.templateDelims[0], o.templateDelims[1]
+	} else if len(o.hst.templateDelims) == 2 {
+		left, right = o.hst.templateDelims[0], o.hst.templateDelims[1]
 	}
 
 	// func
@@ -186,9 +190,11 @@ func (o *Context) RenderContent(data interface{}, htm ...string) {
 	var err error
 
 	// Delims
-	left, right := o.hst.templateDelims[0], o.hst.templateDelims[1]
+	var left, right string
 	if len(o.templateDelims) == 2 {
 		left, right = o.templateDelims[0], o.templateDelims[1]
+	} else if len(o.hst.templateDelims) == 2 {
+		left, right = o.hst.templateDelims[0], o.hst.templateDelims[1]
 	}
 
 	// func
