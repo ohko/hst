@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -29,6 +30,9 @@ type HST struct {
 	template        *template.Template
 	templateDelims  *delims
 	templateFuncMap template.FuncMap
+
+	handleFuncs map[string]map[string][]HandlerFunc
+	logger      io.Writer
 }
 
 // HandlerFunc ...
@@ -52,6 +56,7 @@ func New(handlers *Handlers) *HST {
 	o.handle = http.NewServeMux()
 	o.hs = handlers
 	o.templateDelims = &delims{left: "{{", right: "}}"}
+	o.handleFuncs = make(map[string]map[string][]HandlerFunc)
 	return o
 }
 
@@ -157,14 +162,44 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 	return nil
 }
 
-// HandleFunc ...
+// HandleFunc 添加路由
 // Example:
 //		HandleFunc("/", func(c *hst.Context){}, func(c *hst.Context){})
 func (o *HST) HandleFunc(pattern string, handler ...HandlerFunc) *HST {
-	return handleFunc(o, pattern, handler...)
+	return handleFunc(o, "", pattern, handler...)
 }
 
-// RegisterHandle ...
+// GET ...
+func (o *HST) GET(pattern string, handler ...HandlerFunc) *HST {
+	return handleFunc(o, "GET", pattern, handler...)
+}
+
+// POST ...
+func (o *HST) POST(pattern string, handler ...HandlerFunc) *HST {
+	return handleFunc(o, "POST", pattern, handler...)
+}
+
+// PUT ...
+func (o *HST) PUT(pattern string, handler ...HandlerFunc) *HST {
+	return handleFunc(o, "PUT", pattern, handler...)
+}
+
+// PATCH ...
+func (o *HST) PATCH(pattern string, handler ...HandlerFunc) *HST {
+	return handleFunc(o, "PATCH", pattern, handler...)
+}
+
+// DELETE ...
+func (o *HST) DELETE(pattern string, handler ...HandlerFunc) *HST {
+	return handleFunc(o, "DELETE", pattern, handler...)
+}
+
+// OPTIONS ...
+func (o *HST) OPTIONS(pattern string, handler ...HandlerFunc) *HST {
+	return handleFunc(o, "OPTIONS", pattern, handler...)
+}
+
+// RegisterHandle 注册自动路由
 // Example:
 //		RegisterHandle(&User{}, &Other{})
 func (o *HST) RegisterHandle(classes ...interface{}) *HST {
@@ -304,5 +339,11 @@ func (o *HST) ParseFiles(filenames ...string) *HST {
 		Delims(o.templateDelims.left, o.templateDelims.right).
 		Funcs(o.templateFuncMap).
 		ParseFiles(filenames...))
+	return o
+}
+
+// SetLogger 设置日志记录
+func (o *HST) SetLogger(logger io.Writer) *HST {
+	o.logger = logger
 	return o
 }

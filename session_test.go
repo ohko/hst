@@ -12,7 +12,7 @@ import (
 func TestNewSessionMemory(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", strings.NewReader(""))
 	w := mywrite{}
-	c := &Context{W: w, R: r}
+	c := &Context{W: &responseWriterWithLength{w, 0}, R: r}
 
 	s := NewSessionMemory()
 	if v, err := s.Get(c, "a"); err == nil || v != nil {
@@ -31,7 +31,7 @@ func TestNewSessionMemory(t *testing.T) {
 func TestNewSessionFile(t *testing.T) {
 	r := httptest.NewRequest("GET", "/", strings.NewReader(""))
 	w := mywrite{}
-	c := &Context{W: w, R: r}
+	c := &Context{W: &responseWriterWithLength{w, 0}, R: r}
 
 	s := NewSessionFile(os.TempDir()+"HST", time.Minute)
 	if v, err := s.Get(c, "a"); err == nil || v != nil {

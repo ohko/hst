@@ -62,15 +62,12 @@ if !MakeTLSFile("ca证书密码", "https证书密码", "pfx安装证书密码", 
 ```
 
 # TODO
-- 日志
-- 分开GET,POST,PUT,PATCH,DELETE,OPTIONS
 - 路径参数
 - 表单验证
 - 上传文件，分片上传
 - JSONP
 - 静态文件打包
 - http2 push
-- Cookie
 - 多服务器
 - 自定义HTTP配置
 

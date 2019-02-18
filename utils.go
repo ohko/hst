@@ -18,49 +18,92 @@ import (
 	"time"
 )
 
-func handleFunc(hst *HST, pattern string, handler ...HandlerFunc) *HST {
-	log.Println("handle:", pattern)
-	hst.handle.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		c := &Context{
-			hst:     hst,
-			session: hst.session,
-			W:       w,
-			R:       r,
-			close:   false,
-		}
-		for _, v := range handler {
-			func(v HandlerFunc, c *Context) {
-				defer func() {
-					if err := recover(); err != nil {
-						switch err.(type) {
-						case hstError, *hstError:
-							c.close = true
-						default:
-							log.Println(err)
-							dep := 0
-							for i := 1; i < 10; i++ {
-								_, file, line, ok := runtime.Caller(i)
-								if !ok {
-									break
-								}
-								if strings.Contains(file, "/runtime/") || strings.Contains(file, "/reflect/") {
-									continue
-								}
-								log.Printf("%s∟%s(%d)\n", strings.Repeat(" ", dep), file, line)
-								dep++
-							}
-							defer func() { recover() }()
-							// c.HTML("found error")
+func handleFunc(hst *HST, method, pattern string, handler ...HandlerFunc) *HST {
+	log.Printf("route:[%s]%s\n", method, pattern)
+
+	f := func(handler HandlerFunc, ctx *Context) {
+		start := time.Now()
+		defer func() {
+			if err := recover(); err != nil {
+				switch err.(type) {
+				case hstError, *hstError:
+					ctx.close = true
+				default:
+					log.Println(err)
+					dep := 0
+					for i := 1; i < 10; i++ {
+						_, file, line, ok := runtime.Caller(i)
+						if !ok {
+							break
 						}
+						if strings.Contains(file, "/runtime/") || strings.Contains(file, "/reflect/") {
+							continue
+						}
+						log.Printf("%s∟%s(%d)\n", strings.Repeat(" ", dep), file, line)
+						dep++
 					}
-				}()
-				v(c)
-			}(v, c)
-			if c.close {
-				break
+					defer func() { recover() }()
+					ctx.Data(500, "found error")
+				}
 			}
-		}
-	})
+
+			var xforwardfor string
+			if ctx.R.Header.Get("Ali-Cdn-Real-Ip") != "" {
+				xforwardfor = ctx.R.Header.Get("Ali-Cdn-Real-Ip")
+			} else if ctx.R.Header.Get("X-Forwarded-For") != "" {
+				xforwardfor = ctx.R.Header.Get("X-Forwarded-For")
+			}
+
+			var l io.Writer
+			if hst.logger != nil {
+				l = hst.logger
+			} else {
+				l = os.Stdout
+			}
+			if _, err := l.Write([]byte(logFormatter(&LogData{
+				RemoteIP:    strings.Split(ctx.R.RemoteAddr, ":")[0],
+				LocalTime:   time.Now(),
+				Status:      ctx.status,
+				UseTime:     time.Now().Sub(start),
+				URI:         fmt.Sprintf("%s %s %s", ctx.R.Method, ctx.R.RequestURI, ctx.R.Proto),
+				Sent:        ctx.W.Length(),
+				Referer:     ctx.R.Referer(),
+				UserAgent:   ctx.R.UserAgent(),
+				XForwardFor: xforwardfor,
+			}))); err != nil {
+				log.Println(err)
+			}
+		}()
+
+		handler(ctx)
+	}
+
+	// 匹配路径
+	if _, ok := hst.handleFuncs[pattern]; !ok {
+		hst.handleFuncs[pattern] = make(map[string][]HandlerFunc)
+
+		// handler
+		hst.handle.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			hs := hst.handleFuncs[pattern]
+			for method, hf := range hs {
+
+				// 匹配方法
+				if method != "" && method != r.Method {
+					continue
+				}
+
+				ctx := &Context{hst: hst, W: &responseWriterWithLength{w, 0}, R: r}
+				for _, v := range hf {
+					f(v, ctx)
+					if ctx.close {
+						break
+					}
+				}
+			}
+		})
+	}
+	hst.handleFuncs[pattern][method] = handler
+
 	return hst
 }
 
