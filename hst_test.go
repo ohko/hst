@@ -17,6 +17,11 @@ var domain = "test"
 var email = "hk@cdeyun.com"
 var msg = "Hello world!"
 
+func Example_main() {
+	s := New(nil)
+	s.ListenHTTP(":8080")
+}
+
 func TestMakeTLSFile(t *testing.T) {
 	if !MakeTLSFile(pass1, pass2, pass3, path, domain, email) {
 		t.Fatal("make tls error!")
@@ -27,7 +32,7 @@ func TestNewHTTPServer(t *testing.T) {
 	hs := &Handlers{
 		"/": []HandlerFunc{
 			func(c *Context) {
-				c.JSON(msg)
+				c.JSON(200, msg)
 			}, func(c *Context) {
 				fmt.Fprint(c.W, msg)
 			},

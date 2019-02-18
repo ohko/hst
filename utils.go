@@ -12,10 +12,57 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
 )
+
+func handleFunc(hst *HST, pattern string, handler ...HandlerFunc) *HST {
+	log.Println("handle:", pattern)
+	hst.handle.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		c := &Context{
+			hst:     hst,
+			session: hst.session,
+			W:       w,
+			R:       r,
+			close:   false,
+		}
+		for _, v := range handler {
+			func(v HandlerFunc, c *Context) {
+				defer func() {
+					if err := recover(); err != nil {
+						switch err.(type) {
+						case hstError, *hstError:
+							c.close = true
+						default:
+							log.Println(err)
+							dep := 0
+							for i := 1; i < 10; i++ {
+								_, file, line, ok := runtime.Caller(i)
+								if !ok {
+									break
+								}
+								if strings.Contains(file, "/runtime/") || strings.Contains(file, "/reflect/") {
+									continue
+								}
+								log.Printf("%s∟%s(%d)\n", strings.Repeat(" ", dep), file, line)
+								dep++
+							}
+							defer func() { recover() }()
+							// c.HTML("found error")
+						}
+					}
+				}()
+				v(c)
+			}(v, c)
+			if c.close {
+				break
+			}
+		}
+	})
+	return hst
+}
 
 // Shutdown 等待信号，优雅的停止服务
 func Shutdown(waitTime time.Duration, hss ...*HST) {
