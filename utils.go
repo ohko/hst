@@ -126,7 +126,7 @@ func Shutdown(waitTime time.Duration, hss ...*HST) {
 }
 
 // Request 获取http/https内容
-func Request(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
+func Request(method, url, cookie, data string, header map[string]string) ([]byte, []*http.Cookie, error) {
 	var client *http.Client
 
 	if strings.HasPrefix(url, "https://") {
@@ -143,6 +143,11 @@ func Request(method, url, cookie, data string) ([]byte, []*http.Cookie, error) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 	req.Header.Set("Cookie", cookie)
+	if header != nil {
+		for k, v := range header {
+			req.Header.Set(k, v)
+		}
+	}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, nil, err

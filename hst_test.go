@@ -48,7 +48,7 @@ func TestNewHTTPServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	{
-		res, _, err := Request("GET", "http://u:p@127.0.0.1:8280", "", "")
+		res, _, err := Request("GET", "http://u:p@127.0.0.1:8280", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -57,7 +57,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := Request("GET", "http://127.0.0.1:8280/abc/LICENSE", "", "")
+		res, _, err := Request("GET", "http://127.0.0.1:8280/abc/LICENSE", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := Request("GET", "http://127.0.0.1:8280/favicon.ico", "", "")
+		res, _, err := Request("GET", "http://127.0.0.1:8280/favicon.ico", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -75,7 +75,7 @@ func TestNewHTTPServer(t *testing.T) {
 		}
 	}
 	{
-		res, _, err := Request("GET", "http://127.0.0.1:8280/ssl.pfx", "", "")
+		res, _, err := Request("GET", "http://127.0.0.1:8280/ssl.pfx", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +102,7 @@ func TestNewHTTPSServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	{
-		res, _, err := Request("GET", "https://127.0.0.1:8281", "", "")
+		res, _, err := Request("GET", "https://127.0.0.1:8281", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -112,7 +112,7 @@ func TestNewHTTPSServer(t *testing.T) {
 	}
 
 	{
-		res, _, err := Request("GET", "https://u:p@127.0.0.1:8281", "", "")
+		res, _, err := Request("GET", "https://u:p@127.0.0.1:8281", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -156,7 +156,7 @@ func TestNewTLSServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 200)
 
 	{
-		res, _, err := Request("GET", "http://127.0.0.1:8283/hANDt", "", "")
+		res, _, err := Request("GET", "http://127.0.0.1:8283/hANDt", "", "", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
