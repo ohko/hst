@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -51,7 +52,8 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 	if err != nil {
 		return err
 	}
-	if len(bs) > 1024 {
+	// Accept-Encoding: deflate, gzip
+	if len(bs) > 1024 && strings.Contains(o.R.Header.Get("Accept-Encoding"), "gzip") {
 		o.W.Header().Set("Content-Encoding", "gzip")
 		g, _ := gzip.NewWriterLevel(o.W, gzip.BestCompression)
 		ww = g
