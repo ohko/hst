@@ -21,8 +21,8 @@ go get -v github.com/ohko/hst
 ## http
 ``` golang
 h := New(nil)
-h.HandleFunc("/", func(c *Context) {
-    fmt.Fprint(w, "Hello world!")
+h.HandleFunc("/", func(ctx *Context) {
+    fmt.Fprint(ctx.W, "Hello world!")
 })
 h.ListenHTTP(":8080")
 ```
@@ -30,8 +30,8 @@ h.ListenHTTP(":8080")
 ## https
 ``` golang
 h := New(nil)
-h.HandleFunc("/", func(c *Context) {
-    fmt.Fprint(w, "Hello world!")
+h.HandleFunc("/", func(ctx *Context) {
+    fmt.Fprint(ctx.W, "Hello world!")
 })
 go h.ListenHTTPS(":8081", "ssl.crt", "ssl.key")
 log.Println("wait ctrl+c ...")
@@ -41,16 +41,16 @@ Shutdown(time.Second*5, h)
 ## tls
 ``` golang
 h := NewTLSServer(nil)
-h.HandleFunc("/", func(c *Context) {
-    fmt.Fprint(w, "Hello world!")
+h.HandleFunc("/", func(ctx *Context) {
+    fmt.Fprint(ctx.W, "Hello world!")
 })
 go h.ListenTLS(":8081", "ca.crt", "ssl.crt", "ssl.key")
 ```
 
 # http认证
 ``` golang
-h.HandleFunc("/", BasicAuth("账户", "密码"), func(c *Context) {
-    fmt.Fprint(w, "Success")
+h.HandleFunc("/", BasicAuth("账户", "密码"), func(ctx *Context) {
+    fmt.Fprint(ctx.W, "Success")
 })
 ```
 
