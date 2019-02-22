@@ -1,14 +1,11 @@
 package hst
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -46,31 +43,32 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 	o.W.Header().Set("Content-Type", "application/json")
-	var ww io.Writer
 
 	bs, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
+
+	// var ww io.Writer
 	// Accept-Encoding: deflate, gzip
-	if len(bs) > 1024 && strings.Contains(o.R.Header.Get("Accept-Encoding"), "gzip") {
-		o.W.Header().Set("Content-Encoding", "gzip")
-		g, _ := gzip.NewWriterLevel(o.W, gzip.BestCompression)
-		ww = g
-		defer g.Close()
-	} else {
-		ww = o.W
-	}
+	// if len(bs) > 1024 && strings.Contains(o.R.Header.Get("Accept-Encoding"), "gzip") {
+	// 	o.W.Header().Set("Content-Encoding", "gzip")
+	// 	g, _ := gzip.NewWriterLevel(o.W, gzip.BestCompression)
+	// 	ww = g
+	// 	defer g.Close()
+	// } else {
+	// ww = o.W
+	// }
 
 	o.R.ParseForm()
 	callback := o.R.FormValue("callback")
 	if callback != "" {
-		ww.Write([]byte(callback))
-		ww.Write([]byte("("))
-		ww.Write(bs)
-		ww.Write([]byte(")"))
+		o.W.Write([]byte(callback))
+		o.W.Write([]byte("("))
+		o.W.Write(bs)
+		o.W.Write([]byte(")"))
 	} else {
-		ww.Write(bs)
+		o.W.Write(bs)
 	}
 	return nil
 }

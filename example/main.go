@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ohko/hst"
@@ -57,6 +58,15 @@ func main() {
 	// logger
 	l, _ := os.OpenFile("/tmp/hst.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	s.SetLogger(l)
+
+	// 静态文件
+	s.StaticGzip("/static/", "./template/")
+
+	// ajax
+	s.HandleFunc("/ajax", func(ctx *hst.Context) {
+		str := strings.Repeat(".", 2048)
+		ctx.JSON2(200, 0, str)
+	})
 
 	// s.ListenAutoCert(".https", "xx.example.com")
 	s.ListenHTTP(":8080")
