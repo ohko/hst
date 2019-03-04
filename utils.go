@@ -19,7 +19,9 @@ import (
 )
 
 func handleFunc(hst *HST, method, pattern string, handler ...HandlerFunc) *HST {
-	log.Printf("route:[%s]%s\n", method, pattern)
+	if !hst.DisableRouteLog {
+		log.Printf("route:[%s]%s\n", method, pattern)
+	}
 
 	f := func(handler HandlerFunc, ctx *Context) {
 		start := time.Now()

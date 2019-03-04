@@ -13,6 +13,9 @@ import (
 func main() {
 	s := hst.New(nil)
 
+	// 禁止显示Route日志
+	// s.DisableRouteLog = true
+
 	// HTML模版
 	s.SetDelims("{[{", "}]}")
 	s.SetTemplateFunc(template.FuncMap{"json": func(x string) string { return "JSON:" + x }})
@@ -20,7 +23,10 @@ func main() {
 	s.ParseFiles("./template/index/index.html", "./template/sub/sub.html")
 
 	// 自动路由
-	s.RegisterHandle(&Auto{})
+	s.RegisterHandle([]hst.HandlerFunc{func(c *hst.Context) {
+		// 检查用户权限
+		// ...
+	}}, &Auto{})
 
 	// 自定义路由
 	s.HandleFunc("/", func(c *hst.Context) {

@@ -19,12 +19,13 @@ import (
 
 // HST ...
 type HST struct {
-	s           *http.Server
-	handle      *http.ServeMux
-	hs          *Handlers
-	Addr        string
-	session     Session
-	CrossOrigin string // 支持跨域 "*" / "a.com,b.com"
+	s               *http.Server
+	handle          *http.ServeMux
+	hs              *Handlers
+	Addr            string
+	session         Session
+	CrossOrigin     string // 支持跨域 "*" / "a.com,b.com"
+	DisableRouteLog bool   // 禁止显示启动时的route路径显示
 
 	// template
 	template        *template.Template
@@ -202,7 +203,7 @@ func (o *HST) OPTIONS(pattern string, handler ...HandlerFunc) *HST {
 // RegisterHandle 注册自动路由
 // Example:
 //		RegisterHandle(&User{}, &Other{})
-func (o *HST) RegisterHandle(classes ...interface{}) *HST {
+func (o *HST) RegisterHandle(middleware []HandlerFunc, classes ...interface{}) *HST {
 	fixName := func(name string) string {
 		r := []rune(name)
 		a := map[rune]rune{'A': 'a', 'B': 'b', 'C': 'c', 'D': 'd', 'E': 'e', 'F': 'f', 'G': 'g', 'H': 'h', 'I': 'i', 'J': 'j', 'K': 'k', 'L': 'l', 'M': 'm', 'N': 'n', 'O': 'o', 'P': 'p', 'Q': 'q', 'R': 'r', 'S': 's', 'T': 't', 'U': 'u', 'V': 'v', 'W': 'w', 'X': 'x', 'Y': 'y', 'Z': 'z'}
@@ -236,9 +237,9 @@ func (o *HST) RegisterHandle(classes ...interface{}) *HST {
 				method = "/"
 			}
 			path := name + method
-			o.HandleFunc(path, func(v reflect.Value) HandlerFunc {
+			o.HandleFunc(path, append(middleware, func(v reflect.Value) HandlerFunc {
 				return func(c *Context) { v.Call([]reflect.Value{reflect.ValueOf(c)}) }
-			}(reflect.ValueOf(c).Method(i)))
+			}(reflect.ValueOf(c).Method(i)))...)
 		}
 	}
 	return o
