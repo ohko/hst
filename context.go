@@ -78,13 +78,39 @@ func (o *Context) JSON2(statusCode int, no int, data interface{}) error {
 	return o.JSON(statusCode, &map[string]interface{}{"no": no, "data": data})
 }
 
-// HTML 输出HTML代码
-func (o *Context) HTML(statusCode int, name string, data interface{}) {
+// HTML 从模版缓存输出HTML模版，需要hst.ParseGlob或hst.ParseFiles
+func (o *Context) HTML(statusCode int, name string, data interface{}, names ...string) {
 	defer o.Close()
 	o.status = statusCode
 	o.W.WriteHeader(statusCode)
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	o.hst.template.ExecuteTemplate(o.W, name, data)
+}
+
+// HTML2 实时读取模版输出HTML模版，需要hst.SetTemplatePath
+// name: 主模版
+// names: 需要的其它模版组件
+func (o *Context) HTML2(statusCode int, name string, data interface{}, names ...string) {
+	defer o.Close()
+	o.status = statusCode
+
+	names = append(names, name)
+	for k, v := range names {
+		names[k] = o.hst.templatePath + v
+	}
+	tpl, err := template.New(name).
+		Delims(o.hst.templateDelims.left, o.hst.templateDelims.right).
+		Funcs(o.hst.templateFuncMap).
+		ParseFiles(names...)
+	if err != nil {
+		o.Data(statusCode, err)
+	}
+
+	o.W.WriteHeader(statusCode)
+	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tpl.Execute(o.W, data); err != nil {
+		o.Data(statusCode, err)
+	}
 }
 
 // Data 输出对象数据

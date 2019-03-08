@@ -27,10 +27,12 @@ type HST struct {
 	CrossOrigin     string // 支持跨域 "*" / "a.com,b.com"
 	DisableRouteLog bool   // 禁止显示启动时的route路径显示
 
-	// template
+	// template 读取模版到内存
 	template        *template.Template
 	templateDelims  *delims
 	templateFuncMap template.FuncMap
+	// 用于template中找不到时，去模版目录读取模版文件
+	templatePath string
 
 	handleFuncs map[string]map[string][]HandlerFunc
 	logger      io.Writer
@@ -56,6 +58,7 @@ func New(handlers *Handlers) *HST {
 	o := new(HST)
 	o.handle = http.NewServeMux()
 	o.hs = handlers
+	o.templatePath = "./"
 	o.templateDelims = &delims{left: "{{", right: "}}"}
 	o.handleFuncs = make(map[string]map[string][]HandlerFunc)
 	return o
@@ -340,6 +343,15 @@ func (o *HST) ParseFiles(filenames ...string) *HST {
 		Delims(o.templateDelims.left, o.templateDelims.right).
 		Funcs(o.templateFuncMap).
 		ParseFiles(filenames...))
+	return o
+}
+
+// SetTemplatePath 设置模版文件跟路径
+func (o *HST) SetTemplatePath(pathname string) *HST {
+	if !strings.HasSuffix(pathname, "/") {
+		pathname += "/"
+	}
+	o.templatePath = pathname
 	return o
 }
 

@@ -21,6 +21,7 @@ func main() {
 	s.SetTemplateFunc(template.FuncMap{"json": func(x string) string { return "JSON:" + x }})
 	// s.ParseGlob("./template/**/*")
 	s.ParseFiles("./template/index/index.html", "./template/sub/sub.html")
+	s.SetTemplatePath("./template/")
 
 	// 自动路由
 	s.RegisterHandle([]hst.HandlerFunc{func(c *hst.Context) {
@@ -32,6 +33,9 @@ func main() {
 	s.HandleFunc("/", func(c *hst.Context) {
 		c.SetCookie("cn", "cv", 3600, "/", "", false, true)
 		c.HTML(200, "index/index.html", "from index")
+	})
+	s.HandleFunc("/refresh", func(c *hst.Context) {
+		c.HTML2(200, "index/index.html", "from index", "sub/sub.html")
 	})
 	s.HandleFunc("/404", func(c *hst.Context) {
 		panic(404)
