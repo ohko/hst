@@ -32,7 +32,6 @@ func (o *Context) Close() {
 func (o *Context) JSON(statusCode int, data interface{}) error {
 	defer o.Close()
 	o.status = statusCode
-	o.W.WriteHeader(statusCode)
 
 	if o.hst.CrossOrigin != "" {
 		crossOrigin := o.hst.CrossOrigin
@@ -40,7 +39,7 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 			crossOrigin = o.R.Header.Get("Origin")
 		}
 		o.W.Header().Set("Access-Control-Allow-Origin", crossOrigin)
-		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
+		// o.W.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 	o.W.Header().Set("Content-Type", "application/json")
 
@@ -59,6 +58,8 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 	// } else {
 	// ww = o.W
 	// }
+
+	o.W.WriteHeader(statusCode)
 
 	o.R.ParseForm()
 	callback := o.R.FormValue("callback")
