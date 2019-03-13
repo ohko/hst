@@ -117,6 +117,13 @@ func (o *Context) HTML2(statusCode int, name string, data interface{}, names ...
 // Data 输出对象数据
 func (o *Context) Data(statusCode int, data interface{}) {
 	defer o.Close()
+	if o.hst.CrossOrigin != "" {
+		crossOrigin := o.hst.CrossOrigin
+		if o.hst.CrossOrigin == "*" {
+			crossOrigin = o.R.Header.Get("Origin")
+		}
+		o.W.Header().Set("Access-Control-Allow-Origin", crossOrigin)
+	}
 	o.status = statusCode
 	o.W.WriteHeader(statusCode)
 	fmt.Fprint(o.W, data)
