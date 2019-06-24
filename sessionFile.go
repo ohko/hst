@@ -13,19 +13,21 @@ import (
 
 // SessionFile ...
 type SessionFile struct {
-	path      string
-	lock      sync.RWMutex
-	update    map[string]time.Time // 更新的session
-	maxExpire time.Duration        // 文件过期时间 time.Minute*15
+	cookieName string
+	path       string
+	lock       sync.RWMutex
+	update     map[string]time.Time // 更新的session
+	maxExpire  time.Duration        // 文件过期时间 time.Minute*15
 }
 
 // NewSessionFile ...
-func NewSessionFile(path string, maxExpire time.Duration) Session {
+func NewSessionFile(cookieName, path string, maxExpire time.Duration) Session {
 	if !strings.HasSuffix(path, "/") {
 		path += "/"
 	}
 	os.MkdirAll(path, 0755)
 	o := new(SessionFile)
+	o.cookieName = cookieName
 	o.path = path
 	o.maxExpire = maxExpire
 	go o.cleanSession()
@@ -37,12 +39,12 @@ func (o *SessionFile) Set(c *Context, domain, path, key string, value interface{
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
-	ck, err := c.R.Cookie(SESSIONKEY)
+	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		ck = &http.Cookie{
 			Domain:   domain,
 			Path:     path,
-			Name:     SESSIONKEY,
+			Name:     o.cookieName,
 			Value:    MakeGUID(),
 			HttpOnly: true,
 		}
@@ -78,7 +80,7 @@ func (o *SessionFile) Set(c *Context, domain, path, key string, value interface{
 
 // Get 读取Session
 func (o *SessionFile) Get(c *Context, key string) (interface{}, error) {
-	ck, err := c.R.Cookie(SESSIONKEY)
+	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +114,7 @@ func (o *SessionFile) Get(c *Context, key string) (interface{}, error) {
 
 // Destory 销毁Session
 func (o *SessionFile) Destory(c *Context) error {
-	ck, err := c.R.Cookie(SESSIONKEY)
+	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		return err
 	}

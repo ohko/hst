@@ -9,13 +9,15 @@ import (
 
 // SessionMemory ...
 type SessionMemory struct {
-	lock sync.RWMutex
-	data map[string]*map[string]*memSessionData
+	cookieName string
+	lock       sync.RWMutex
+	data       map[string]*map[string]*memSessionData
 }
 
 // NewSessionMemory ...
-func NewSessionMemory() Session {
+func NewSessionMemory(cookieName string) Session {
 	o := new(SessionMemory)
+	o.cookieName = cookieName
 	o.data = make(map[string]*map[string]*memSessionData)
 	go o.cleanSession()
 	return o
@@ -26,12 +28,12 @@ func (o *SessionMemory) Set(c *Context, domain, path, key string, value interfac
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
-	ck, err := c.R.Cookie(SESSIONKEY)
+	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		ck = &http.Cookie{
 			Domain:   domain,
 			Path:     path,
-			Name:     SESSIONKEY,
+			Name:     o.cookieName,
 			Value:    MakeGUID(),
 			HttpOnly: true,
 		}
@@ -57,7 +59,7 @@ func (o *SessionMemory) Set(c *Context, domain, path, key string, value interfac
 
 // Get 读取Session
 func (o *SessionMemory) Get(c *Context, key string) (interface{}, error) {
-	ck, err := c.R.Cookie(SESSIONKEY)
+	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +81,7 @@ func (o *SessionMemory) Get(c *Context, key string) (interface{}, error) {
 
 // Destory 销毁Session
 func (o *SessionMemory) Destory(c *Context) error {
-	ck, err := c.R.Cookie(SESSIONKEY)
+	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		return err
 	}

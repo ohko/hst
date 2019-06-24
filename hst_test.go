@@ -128,7 +128,7 @@ func TestNewTLSServer(t *testing.T) {
 		fmt.Fprint(c.W, msg)
 	})
 	h := New(&httpAndTLS)
-	h.SetSession(NewSessionMemory())
+	h.SetSession(NewSessionMemory("HST_SESSION"))
 	// h.SetSession(NewSessionFile("/tmp/hstSession", time.Hour))
 	h.HandleFunc("/",
 		func(c *Context) {
@@ -186,7 +186,7 @@ func TestNewTLSServer(t *testing.T) {
 		_, cs, _ := RequestTLS("GET", "https://127.0.0.1:8282/SetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "", "")
 		cookie := ""
 		for _, v := range cs {
-			if v.Name == SESSIONKEY {
+			if v.Name == "HST_SESSION" {
 				cookie = v.Value
 				break
 			}
@@ -194,7 +194,7 @@ func TestNewTLSServer(t *testing.T) {
 		if cookie != "" {
 			log.Println(cookie)
 		}
-		res, _, err := RequestTLS("GET", "https://127.0.0.1:8282/GetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", SESSIONKEY+"="+cookie, "")
+		res, _, err := RequestTLS("GET", "https://127.0.0.1:8282/GetSession", path+domain+".ca.crt", path+domain+".ssl.crt", path+domain+".ssl.key", "HST_SESSION="+cookie, "")
 		if err != nil {
 			t.Fatal(err)
 		}

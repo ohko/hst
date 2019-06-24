@@ -4,11 +4,6 @@ import (
 	"time"
 )
 
-// const
-const (
-	SESSIONKEY = "HST_SESSION"
-)
-
 type memSessionData struct {
 	Data   interface{}
 	Expire time.Time
