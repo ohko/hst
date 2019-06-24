@@ -138,7 +138,7 @@ func TestNewTLSServer(t *testing.T) {
 			fmt.Fprint(c.W, msg)
 		})
 	h.HandleFunc("/SetSession", func(c *Context) {
-		c.SessionSet("a", msg, time.Minute)
+		c.SessionSet("", "/", "a", msg, time.Minute)
 	})
 	h.HandleFunc("/GetSession", func(c *Context) {
 		v, _ := c.SessionGet("a")

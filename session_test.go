@@ -18,7 +18,7 @@ func TestNewSessionMemory(t *testing.T) {
 	if v, err := s.Get(c, "a"); err == nil || v != nil {
 		t.Error(v, err)
 	}
-	s.Set(c, "a", "A", time.Second)
+	s.Set(c, "", "/", "a", "A", time.Second)
 	if v, err := s.Get(c, "a"); err != nil || v.(string) != "A" {
 		t.Error(v, err)
 	}
@@ -37,7 +37,7 @@ func TestNewSessionFile(t *testing.T) {
 	if v, err := s.Get(c, "a"); err == nil || v != nil {
 		t.Error(v, err)
 	}
-	s.Set(c, "a", "A", time.Second)
+	s.Set(c, "", "/", "a", "A", time.Second)
 	if v, err := s.Get(c, "a"); err != nil || v.(string) != "A" {
 		t.Error(v, err)
 	}

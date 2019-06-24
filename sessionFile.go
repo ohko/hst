@@ -33,13 +33,15 @@ func NewSessionFile(path string, maxExpire time.Duration) Session {
 }
 
 // Set 设置Session
-func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time.Duration) error {
+func (o *SessionFile) Set(c *Context, domain, path, key string, value interface{}, expire time.Duration) error {
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
 	ck, err := c.R.Cookie(SESSIONKEY)
 	if err != nil {
 		ck = &http.Cookie{
+			Domain:   domain,
+			Path:     path,
 			Name:     SESSIONKEY,
 			Value:    MakeGUID(),
 			HttpOnly: true,

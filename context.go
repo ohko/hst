@@ -130,8 +130,8 @@ func (o *Context) Data(statusCode int, data interface{}) {
 }
 
 // SessionSet 设置Session
-func (o *Context) SessionSet(key string, value interface{}, expire time.Duration) error {
-	return o.hst.session.Set(o, key, value, expire)
+func (o *Context) SessionSet(domain, path, key string, value interface{}, expire time.Duration) error {
+	return o.hst.session.Set(o, domain, path, key, value, expire)
 }
 
 // SessionGet 读取Session
