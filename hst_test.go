@@ -128,7 +128,7 @@ func TestNewTLSServer(t *testing.T) {
 		fmt.Fprint(c.W, msg)
 	})
 	h := New(&httpAndTLS)
-	h.SetSession(NewSessionMemory("HST_SESSION"))
+	h.SetSession(NewSessionMemory("", "/", "HST_SESSION"))
 	// h.SetSession(NewSessionFile("/tmp/hstSession", time.Hour))
 	h.HandleFunc("/",
 		func(c *Context) {
@@ -138,7 +138,7 @@ func TestNewTLSServer(t *testing.T) {
 			fmt.Fprint(c.W, msg)
 		})
 	h.HandleFunc("/SetSession", func(c *Context) {
-		c.SessionSet("", "/", "a", msg, time.Minute)
+		c.SessionSet("a", msg)
 	})
 	h.HandleFunc("/GetSession", func(c *Context) {
 		v, _ := c.SessionGet("a")

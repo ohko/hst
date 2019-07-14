@@ -13,21 +13,26 @@ import (
 
 // SessionFile ...
 type SessionFile struct {
-	cookieName string
-	path       string
-	lock       sync.RWMutex
-	update     map[string]time.Time // 更新的session
-	maxExpire  time.Duration        // 文件过期时间 time.Minute*15
+	cookieName   string
+	cookiePath   string
+	cookieDomain string
+	cookieExpire time.Duration
+	path         string
+	lock         sync.RWMutex
+	update       map[string]time.Time // 更新的session
+	maxExpire    time.Duration        // 文件过期时间 time.Minute*15
 }
 
 // NewSessionFile ...
-func NewSessionFile(cookieName, path string, maxExpire time.Duration) Session {
+func NewSessionFile(cookieDomain, cookiePath, cookieName, path string, maxExpire time.Duration) Session {
 	if !strings.HasSuffix(path, "/") {
 		path += "/"
 	}
 	os.MkdirAll(path, 0755)
 	o := new(SessionFile)
 	o.cookieName = cookieName
+	o.cookieDomain = cookieDomain
+	o.cookiePath = cookiePath
 	o.path = path
 	o.maxExpire = maxExpire
 	go o.cleanSession()
@@ -35,17 +40,18 @@ func NewSessionFile(cookieName, path string, maxExpire time.Duration) Session {
 }
 
 // Set 设置Session
-func (o *SessionFile) Set(c *Context, domain, path, key string, value interface{}, expire time.Duration) error {
+func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time.Duration) error {
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
 	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		ck = &http.Cookie{
-			Domain:   domain,
-			Path:     path,
+			Domain:   o.cookieDomain,
+			Path:     o.cookiePath,
 			Name:     o.cookieName,
 			Value:    MakeGUID(),
+			Expires:  time.Now().Add(o.cookieExpire),
 			HttpOnly: true,
 		}
 		c.R.Header.Set("Cookie", ck.String())

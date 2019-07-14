@@ -129,9 +129,14 @@ func (o *Context) Data(statusCode int, data interface{}) {
 	fmt.Fprint(o.W, data)
 }
 
-// SessionSet 设置Session
-func (o *Context) SessionSet(domain, path, key string, value interface{}, expire time.Duration) error {
-	return o.hst.session.Set(o, domain, path, key, value, expire)
+// SessionSet 设置Session，默认30分钟后过期
+func (o *Context) SessionSet(key string, value interface{}) error {
+	return o.hst.session.Set(o, key, value, time.Minute*30)
+}
+
+// SessionSetExpire 设置Session，附带过期时间
+func (o *Context) SessionSetExpire(key string, value interface{}, expire time.Duration) error {
+	return o.hst.session.Set(o, key, value, expire)
 }
 
 // SessionGet 读取Session

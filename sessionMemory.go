@@ -9,32 +9,39 @@ import (
 
 // SessionMemory ...
 type SessionMemory struct {
-	cookieName string
-	lock       sync.RWMutex
-	data       map[string]*map[string]*memSessionData
+	cookieName   string
+	cookiePath   string
+	cookieDomain string
+	cookieExpire time.Duration
+	lock         sync.RWMutex
+	data         map[string]*map[string]*memSessionData
 }
 
 // NewSessionMemory ...
-func NewSessionMemory(cookieName string) Session {
+func NewSessionMemory(cookieDomain, cookiePath, cookieName string) Session {
 	o := new(SessionMemory)
 	o.cookieName = cookieName
+	o.cookieName = cookieName
+	o.cookieDomain = cookieDomain
+	o.cookiePath = cookiePath
 	o.data = make(map[string]*map[string]*memSessionData)
 	go o.cleanSession()
 	return o
 }
 
 // Set 设置Session
-func (o *SessionMemory) Set(c *Context, domain, path, key string, value interface{}, expire time.Duration) error {
+func (o *SessionMemory) Set(c *Context, key string, value interface{}, expire time.Duration) error {
 	o.lock.Lock()
 	defer o.lock.Unlock()
 
 	ck, err := c.R.Cookie(o.cookieName)
 	if err != nil {
 		ck = &http.Cookie{
-			Domain:   domain,
-			Path:     path,
+			Domain:   o.cookieDomain,
+			Path:     o.cookiePath,
 			Name:     o.cookieName,
 			Value:    MakeGUID(),
+			Expires:  time.Now().Add(o.cookieExpire),
 			HttpOnly: true,
 		}
 		c.R.Header.Set("Cookie", ck.String())
