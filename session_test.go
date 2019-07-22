@@ -14,7 +14,7 @@ func TestNewSessionMemory(t *testing.T) {
 	w := mywrite{}
 	c := &Context{W: &responseWriterWithLength{w, 0}, R: r}
 
-	s := NewSessionMemory("", "/", "HST_SESSION")
+	s := NewSessionMemory("", "/", "HST_SESSION", time.Minute)
 	if v, err := s.Get(c, "a"); err == nil || v != nil {
 		t.Error(v, err)
 	}

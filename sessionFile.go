@@ -20,7 +20,7 @@ type SessionFile struct {
 	path         string
 	lock         sync.RWMutex
 	update       map[string]time.Time // 更新的session
-	maxExpire    time.Duration        // 文件过期时间 time.Minute*15
+	maxExpire    time.Duration        // 文件过期时间
 }
 
 // NewSessionFile ...
@@ -52,6 +52,7 @@ func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time
 			Path:     o.cookiePath,
 			Name:     o.cookieName,
 			Value:    MakeGUID(),
+			MaxAge:   int(o.maxExpire.Seconds()),
 			Expires:  time.Now().Add(o.cookieExpire),
 			HttpOnly: true,
 		}
@@ -59,18 +60,18 @@ func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time
 		http.SetCookie(c.W, ck)
 	}
 
-	var data map[string]memSessionData
+	var data map[string]sessionData
 	{ // 读取
 		if bs, err := ioutil.ReadFile(o.path + ck.Value); err == nil {
 			if err := json.Unmarshal(bs, &data); err != nil {
-				data = make(map[string]memSessionData)
+				data = make(map[string]sessionData)
 			}
 		} else {
-			data = make(map[string]memSessionData)
+			data = make(map[string]sessionData)
 		}
 	}
 
-	data[key] = memSessionData{Data: value, Expire: time.Now().Add(expire)}
+	data[key] = sessionData{Data: value, Expire: time.Now().Add(expire)}
 
 	{ // 保存
 		bs, err := json.Marshal(&data)
@@ -95,7 +96,7 @@ func (o *SessionFile) Get(c *Context, key string) (interface{}, error) {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 
-	var data map[string]memSessionData
+	var data map[string]sessionData
 	// 读取
 	bs, err := ioutil.ReadFile(o.path + ck.Value)
 	if err != nil {

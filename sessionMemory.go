@@ -14,17 +14,20 @@ type SessionMemory struct {
 	cookieDomain string
 	cookieExpire time.Duration
 	lock         sync.RWMutex
-	data         map[string]*map[string]*memSessionData
+	data         map[string]*map[string]*sessionData
+	maxExpire    time.Duration // 文件过期时间
 }
 
 // NewSessionMemory ...
-func NewSessionMemory(cookieDomain, cookiePath, cookieName string) Session {
+func NewSessionMemory(cookieDomain, cookiePath, cookieName string, maxExpire time.Duration) Session {
 	o := new(SessionMemory)
 	o.cookieName = cookieName
 	o.cookieName = cookieName
 	o.cookieDomain = cookieDomain
 	o.cookiePath = cookiePath
-	o.data = make(map[string]*map[string]*memSessionData)
+	o.maxExpire = maxExpire
+	o.cookieExpire = maxExpire
+	o.data = make(map[string]*map[string]*sessionData)
 	go o.cleanSession()
 	return o
 }
@@ -41,6 +44,7 @@ func (o *SessionMemory) Set(c *Context, key string, value interface{}, expire ti
 			Path:     o.cookiePath,
 			Name:     o.cookieName,
 			Value:    MakeGUID(),
+			MaxAge:   int(o.maxExpire.Seconds()),
 			Expires:  time.Now().Add(o.cookieExpire),
 			HttpOnly: true,
 		}
@@ -54,12 +58,12 @@ func (o *SessionMemory) Set(c *Context, key string, value interface{}, expire ti
 			vv.Expire = time.Now().Add(expire)
 			return nil
 		}
-		(*v)[key] = &memSessionData{Data: value, Expire: time.Now().Add(expire)}
+		(*v)[key] = &sessionData{Data: value, Expire: time.Now().Add(expire)}
 		return nil
 	}
 
-	data := &memSessionData{Data: value, Expire: time.Now().Add(expire)}
-	sess := &map[string]*memSessionData{key: data}
+	data := &sessionData{Data: value, Expire: time.Now().Add(expire)}
+	sess := &map[string]*sessionData{key: data}
 	o.data[ck.Value] = sess
 	return nil
 }

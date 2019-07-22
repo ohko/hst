@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type memSessionData struct {
+type sessionData struct {
 	Data   interface{}
 	Expire time.Time
 }

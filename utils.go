@@ -4,10 +4,13 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	mrand "math/rand"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -273,4 +276,30 @@ func MakeTLSFile(passRoot, passKey, passPfx, path, domain, email string) bool {
 	bs1, _ := exec.Command(`openssl`, `x509`, `-noout`, `-modulus`, `-in`, path+domain+`.ssl.crt`).CombinedOutput()
 	bs2, _ := exec.Command(`openssl`, `rsa`, `-noout`, `-modulus`, `-in`, path+domain+`.ssl.key`).CombinedOutput()
 	return string(bs1) == string(bs2)
+}
+
+// GetLocalIP 获取局域网IP地址
+func GetLocalIP() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String(), nil
+			}
+		}
+	}
+	return "", errors.New("no local ip")
+}
+
+// RandIntn return min <= x <= max
+func RandIntn(min, max int) int {
+	if min == 0 && max == 0 {
+		return 0
+	}
+	return mrand.Intn(max+1-min) + min
+	// return rand.New(rand.NewSource(time.Now().UnixNano())).Intn((max-min)+1) + min
 }
