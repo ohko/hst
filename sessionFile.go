@@ -35,6 +35,7 @@ func NewSessionFile(cookieDomain, cookiePath, cookieName, path string, maxExpire
 	o.cookiePath = cookiePath
 	o.path = path
 	o.maxExpire = maxExpire
+	o.cookieExpire = maxExpire
 	go o.cleanSession()
 	return o
 }
