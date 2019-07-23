@@ -300,6 +300,7 @@ func RandIntn(min, max int) int {
 	if min == 0 && max == 0 {
 		return 0
 	}
+	mrand.Seed(time.Now().UnixNano())
 	return mrand.Intn(max+1-min) + min
 	// return rand.New(rand.NewSource(time.Now().UnixNano())).Intn((max-min)+1) + min
 }
