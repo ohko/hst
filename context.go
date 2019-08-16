@@ -39,7 +39,7 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 			crossOrigin = o.R.Header.Get("Origin")
 		}
 		o.W.Header().Set("Access-Control-Allow-Origin", crossOrigin)
-		// o.W.Header().Set("Access-Control-Allow-Credentials", "true")
+		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
 	o.W.Header().Set("Content-Type", "application/json")
 
