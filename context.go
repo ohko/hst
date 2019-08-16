@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -86,6 +87,16 @@ func (o *Context) HTML(statusCode int, name string, data interface{}, names ...s
 	o.W.WriteHeader(statusCode)
 	o.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	o.hst.template.ExecuteTemplate(o.W, name, data)
+}
+
+// IsAjax 是否是ajax请求
+func (o *Context) IsAjax() bool {
+	if o.R.Header.Get("X-Requested-With") == "XMLHttpRequest" ||
+		strings.Contains(o.R.Header.Get("Accept"), "application/json") ||
+		strings.Contains(o.R.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
+		return true
+	}
+	return false
 }
 
 // HTML2 实时读取模版输出HTML模版，需要hst.SetTemplatePath
