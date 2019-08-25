@@ -29,19 +29,24 @@ func (o *Context) Close() {
 	panic(&hstError{"end"})
 }
 
-// JSON 返回json数据，自动识别jsonp
-func (o *Context) JSON(statusCode int, data interface{}) error {
-	defer o.Close()
-	o.status = statusCode
-
+// Corss 设置跨域
+func (o *Context) Corss() {
 	if o.hst.CrossOrigin != "" {
 		crossOrigin := o.hst.CrossOrigin
-		if o.hst.CrossOrigin == "*" {
+		if o.hst.CrossOrigin == "*" && o.R.Header.Get("Origin") != "" {
 			crossOrigin = o.R.Header.Get("Origin")
 		}
 		o.W.Header().Set("Access-Control-Allow-Origin", crossOrigin)
 		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
 	}
+}
+
+// JSON 返回json数据，自动识别jsonp
+func (o *Context) JSON(statusCode int, data interface{}) error {
+	defer o.Close()
+	o.status = statusCode
+
+	o.Corss()
 	o.W.Header().Set("Content-Type", "application/json")
 
 	bs, err := json.Marshal(data)
@@ -92,8 +97,7 @@ func (o *Context) HTML(statusCode int, name string, data interface{}, names ...s
 // IsAjax 是否是ajax请求
 func (o *Context) IsAjax() bool {
 	if o.R.Header.Get("X-Requested-With") == "XMLHttpRequest" ||
-		strings.Contains(o.R.Header.Get("Accept"), "application/json") ||
-		strings.Contains(o.R.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
+		strings.Contains(o.R.Header.Get("Accept"), "application/json") {
 		return true
 	}
 	return false
@@ -128,13 +132,7 @@ func (o *Context) HTML2(statusCode int, name string, data interface{}, names ...
 // Data 输出对象数据
 func (o *Context) Data(statusCode int, data interface{}) {
 	defer o.Close()
-	if o.hst.CrossOrigin != "" {
-		crossOrigin := o.hst.CrossOrigin
-		if o.hst.CrossOrigin == "*" {
-			crossOrigin = o.R.Header.Get("Origin")
-		}
-		o.W.Header().Set("Access-Control-Allow-Origin", crossOrigin)
-	}
+	o.Corss()
 	o.status = statusCode
 	o.W.WriteHeader(statusCode)
 	fmt.Fprint(o.W, data)
