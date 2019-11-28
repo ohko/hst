@@ -140,7 +140,7 @@ func (o *Context) Data(statusCode int, data interface{}) {
 
 // SessionSet 设置Session，默认30分钟后过期
 func (o *Context) SessionSet(key string, value interface{}) error {
-	return o.hst.session.Set(o, key, value, time.Minute*30)
+	return o.hst.session.Set(o, key, value, o.hst.session.GetCookieExpire())
 }
 
 // SessionSetExpire 设置Session，附带过期时间

@@ -40,6 +40,11 @@ func NewSessionFile(cookieDomain, cookiePath, cookieName, path string, maxExpire
 	return o
 }
 
+// GetCookieExpire 获取cookie的过期时间
+func (o *SessionFile) GetCookieExpire() time.Duration {
+	return o.cookieExpire
+}
+
 // Set 设置Session
 func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time.Duration) error {
 	o.lock.Lock()
