@@ -62,7 +62,6 @@ func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time
 			HttpOnly: true,
 		}
 		c.R.AddCookie(ck)
-		// c.R.Header.Set("Cookie", ck.String())
 		http.SetCookie(c.W, ck)
 	}
 
