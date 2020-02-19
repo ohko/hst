@@ -1,4 +1,7 @@
 # hst
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0a908b66118b4b03a972a59d34cd1492)](https://app.codacy.com/app/ohko/hst?utm_source=github.com&utm_medium=referral&utm_content=ohko/hst&utm_campaign=Badge_Grade_Dashboard)
+
 **H**ttp/http**S**/**T**ls web服务库
 
 # 功能
