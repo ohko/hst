@@ -61,7 +61,8 @@ func (o *SessionFile) Set(c *Context, key string, value interface{}, expire time
 			Expires:  time.Now().Add(o.cookieExpire),
 			HttpOnly: true,
 		}
-		c.R.Header.Set("Cookie", ck.String())
+		c.R.AddCookie(ck)
+		// c.R.Header.Set("Cookie", ck.String())
 		http.SetCookie(c.W, ck)
 	}
 
