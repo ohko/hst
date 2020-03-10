@@ -112,6 +112,8 @@ func (o *SessionMemory) Destory(c *Context) error {
 		delete(o.data, ck.Value)
 	}
 	ck.Expires = time.Now().Add(-1)
+	ck.Domain = o.cookieDomain
+	ck.Path = o.cookiePath
 	http.SetCookie(c.W, ck)
 	return nil
 }
