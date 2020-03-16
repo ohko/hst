@@ -23,6 +23,12 @@ type Context struct {
 	templateFuncMap template.FuncMap
 }
 
+// JSONData 输出数据JSON格式
+type JSONData struct {
+	No   int         `json:"no"`
+	Data interface{} `json:"data"`
+}
+
 // Close 结束后面的流程
 func (o *Context) Close() {
 	o.close = true
@@ -82,7 +88,7 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 
 // JSON2 返回json数据，自动识别jsonp
 func (o *Context) JSON2(statusCode int, no int, data interface{}) error {
-	return o.JSON(statusCode, &map[string]interface{}{"no": no, "data": data})
+	return o.JSON(statusCode, &JSONData{No: no, Data: data})
 }
 
 // HTML 从模版缓存输出HTML模版，需要hst.ParseGlob或hst.ParseFiles

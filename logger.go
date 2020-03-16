@@ -1,7 +1,9 @@
 package hst
 
 import (
+	"bufio"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 )
@@ -41,4 +43,8 @@ func (w *responseWriterWithLength) Write(b []byte) (n int, err error) {
 
 func (w *responseWriterWithLength) Length() int {
 	return w.length
+}
+
+func (w *responseWriterWithLength) Hijack() (conn net.Conn, rw *bufio.ReadWriter, err error) {
+	return w.ResponseWriter.(http.Hijacker).Hijack()
 }
