@@ -144,6 +144,9 @@ func Request(method, url, cookie, data string, header map[string]string) ([]byte
 	}
 
 	req, err := http.NewRequest(method, url, strings.NewReader(data))
+	if err != nil {
+		return nil, nil, err
+	}
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
@@ -191,6 +194,9 @@ func RequestTLS(method, url, ca, crt, key, cookie, data string) ([]byte, []*http
 
 	client := &http.Client{Transport: tr}
 	req, err := http.NewRequest(method, url, strings.NewReader(data))
+	if err != nil {
+		return nil, nil, err
+	}
 	if method == "POST" {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
