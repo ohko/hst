@@ -44,6 +44,8 @@ func (o *Context) Corss() {
 		}
 		o.W.Header().Set("Access-Control-Allow-Origin", crossOrigin)
 		o.W.Header().Set("Access-Control-Allow-Credentials", "true")
+		o.W.Header().Set("Access-Control-Allow-Headers",
+			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	}
 }
 
