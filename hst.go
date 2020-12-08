@@ -166,6 +166,14 @@ func (o *HST) ListenTLS(addr, ca, crt, key string) error {
 	return nil
 }
 
+// Handle 添加路由
+// Example:
+//		Handle("/", http.Handler)
+func (o *HST) Handle(pattern string, handler http.Handler) *HST {
+	o.handle.Handle(pattern, handler)
+	return o
+}
+
 // HandleFunc 添加路由
 // Example:
 //		HandleFunc("/", func(c *hst.Context){}, func(c *hst.Context){})
@@ -279,8 +287,7 @@ func (o *HST) Favicon() *HST {
 
 // Static 静态文件
 func (o *HST) Static(partten, path string) *HST {
-	o.handle.Handle(partten, http.StripPrefix(partten, http.FileServer(http.Dir(path))))
-	return o
+	return o.Handle(partten, http.StripPrefix(partten, http.FileServer(http.Dir(path))))
 }
 
 // StaticGzip 静态文件，增加gzip压缩

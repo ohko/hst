@@ -133,6 +133,8 @@ func (o *SessionFile) Destory(c *Context) error {
 	}
 
 	ck.Expires = time.Now().Add(-1)
+	ck.Domain = o.cookieDomain
+	ck.Path = o.cookiePath
 	http.SetCookie(c.W, ck)
 
 	o.lock.Lock()
