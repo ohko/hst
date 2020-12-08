@@ -27,6 +27,8 @@ type HST struct {
 	CrossOrigin     string // 支持跨域 "*" / "a.com,b.com"
 	DisableRouteLog bool   // 禁止显示启动时的route路径显示
 
+	DisableAutoGzip bool // 禁止自动gzip
+
 	// template 读取模版到内存
 	template        *template.Template
 	templateDelims  *delims

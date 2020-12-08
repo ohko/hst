@@ -1,9 +1,11 @@
 package hst
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -62,28 +64,30 @@ func (o *Context) JSON(statusCode int, data interface{}) error {
 		return err
 	}
 
-	// var ww io.Writer
-	// Accept-Encoding: deflate, gzip
-	// if len(bs) > 1024 && strings.Contains(o.R.Header.Get("Accept-Encoding"), "gzip") {
-	// 	o.W.Header().Set("Content-Encoding", "gzip")
-	// 	g, _ := gzip.NewWriterLevel(o.W, gzip.BestCompression)
-	// 	ww = g
-	// 	defer g.Close()
-	// } else {
-	// ww = o.W
-	// }
+	var ww io.Writer = o.W
+	if !o.hst.DisableAutoGzip { // 未禁用自动gzip
+		// Accept-Encoding: deflate, gzip
+		if len(bs) > 1024 && strings.Contains(o.R.Header.Get("Accept-Encoding"), "gzip") {
+			o.W.Header().Set("Content-Encoding", "gzip")
+			g, _ := gzip.NewWriterLevel(o.W, gzip.BestCompression)
+			ww = g
+			defer g.Close()
+		} else {
+			ww = o.W
+		}
+	}
 
 	o.W.WriteHeader(statusCode)
 
 	o.R.ParseForm()
 	callback := o.R.FormValue("callback")
 	if callback != "" {
-		o.W.Write([]byte(callback))
-		o.W.Write([]byte("("))
-		o.W.Write(bs)
-		o.W.Write([]byte(")"))
+		ww.Write([]byte(callback))
+		ww.Write([]byte("("))
+		ww.Write(bs)
+		ww.Write([]byte(")"))
 	} else {
-		o.W.Write(bs)
+		ww.Write(bs)
 	}
 	return nil
 }
