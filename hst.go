@@ -26,6 +26,7 @@ type HST struct {
 	session         Session
 	CrossOrigin     string // 支持跨域 "*" / "a.com,b.com"
 	DisableRouteLog bool   // 禁止显示启动时的route路径显示
+	ContentSecurityPolicyReportOnly string // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Security-Policy-Report-Only
 
 	DisableAutoGzip bool // 禁止自动gzip
 
@@ -296,6 +297,9 @@ func (o *HST) Static(partten, path string) *HST {
 func (o *HST) StaticGzip(partten, path string) *HST {
 	o.handle.HandleFunc(partten, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Encoding", "gzip")
+		if o.ContentSecurityPolicyReportOnly != "" {
+			w.Header().Set("Content-Security-Policy-Report-Only", o.ContentSecurityPolicyReportOnly)
+		}
 		gz := newGzip(w)
 		http.StripPrefix(partten, http.FileServer(http.Dir(path))).ServeHTTP(gz, r)
 		gz.Close()
